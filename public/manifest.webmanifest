@@ -1,0 +1,20 @@
+{
+  "name": "Guru360",
+  "short_name": "Guru360",
+  "description": "Kerja harian guru dalam satu aplikasi: RPH, takwim, kertas kerja, surat, minit, OPR dan jobskop.",
+  "lang": "ms",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f5f4",
+  "theme_color": "#0e5a4a",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
