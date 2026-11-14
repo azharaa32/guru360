@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { TAHUN_ADA, kumpulan } from '../data/kalendar';
+import { butirProgram, programPada, tarikhBerprogram, type Program } from '../lib/program';
+import { ProgramTakwim } from './ProgramTakwim';
 import {
   BULAN_PENDEK,
   NAMA_BULAN,
@@ -17,6 +19,12 @@ import {
 interface Props {
   negeri: string | null;
   cuti: CutiSendiri[];
+  program: Program[];
+  programSedia: boolean;
+  programTertunda: boolean;
+  programRalat: string | null;
+  simpanProgram: (p: Program[]) => void;
+  padamProgram: (id: string) => void;
 }
 
 const LABEL_HARI = ['IS', 'SE', 'RA', 'KH', 'JU', 'SA', 'AH'];
@@ -37,7 +45,7 @@ function teksStatus(s: StatusHari): string {
 
 const warnaJenis = (jenis: string) => (jenis === 'sekolah' ? 'biru' : jenis === 'sendiri' ? 'emas' : 'merah');
 
-export function Takwim({ negeri, cuti }: Props) {
+export function Takwim({ negeri, cuti, program, programSedia, programTertunda, programRalat, simpanProgram, padamProgram }: Props) {
   const kini = hariIni();
   const [bulan, setBulan] = useState(() => {
     const d = new Date();
@@ -67,6 +75,8 @@ export function Takwim({ negeri, cuti }: Props) {
 
   const tahunAda = TAHUN_ADA.includes(bulan.tahun);
   const statusPilih = kal.status(pilih);
+  const berprogram = useMemo(() => tarikhBerprogram(program), [program]);
+  const programPilih = useMemo(() => programPada(program, pilih), [program, pilih]);
   const akanDatang = useMemo(() => cutiAkanDatang(negeri, cuti, kini), [negeri, cuti, kini]);
 
   return (
@@ -113,10 +123,11 @@ export function Takwim({ negeri, cuti }: Props) {
                   type="button"
                   className={`sel ${kelasSel(c.status)}${c.tarikh === kini ? ' sel-kini' : ''}`}
                   aria-pressed={c.tarikh === pilih}
-                  aria-label={`${tarikhPenuh(c.tarikh)}: ${teksStatus(c.status)}`}
+                  aria-label={`${tarikhPenuh(c.tarikh)}: ${teksStatus(c.status)}${berprogram.has(c.tarikh) ? ', ada program' : ''}`}
                   onClick={() => setPilih(c.tarikh)}
                 >
                   {c.hari}
+                  {berprogram.has(c.tarikh) && <i className="titik-program" aria-hidden="true" />}
                 </button>
               ) : (
                 <span key={`k${i}`} />
@@ -133,6 +144,9 @@ export function Takwim({ negeri, cuti }: Props) {
             <span>
               <i className="sel-rehat" /> Hujung minggu
             </span>
+            <span>
+              <i className="titik-petunjuk" /> Program
+            </span>
           </div>
         </section>
 
@@ -140,7 +154,19 @@ export function Takwim({ negeri, cuti }: Props) {
           <strong>{tarikhPenuh(pilih)}</strong>
           <span>{teksStatus(statusPilih)}</span>
           {statusPilih.jenis === 'cuti' && statusPilih.sebab.some((x) => x.semak) && <span className="bantuan">* Tarikh ini perlu disahkan dengan dokumen rasmi.</span>}
+          {programPilih.length > 0 && (
+            <ul className="program-hari">
+              {programPilih.map((p) => (
+                <li key={p.id}>
+                  <strong>{p.nama}</strong>
+                  {butirProgram(p) && <span>{butirProgram(p)}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
+
+        <ProgramTakwim program={program} sedia={programSedia} tertunda={programTertunda} ralat={programRalat} pilih={pilih} simpanProgram={simpanProgram} padamProgram={padamProgram} />
 
         {!tahunAda && <p className="nota">Kalendar KPM bagi tahun {bulan.tahun} belum dimuatkan. Hanya hujung minggu dan cuti sendiri dipaparkan.</p>}
 
@@ -179,7 +205,7 @@ export function Takwim({ negeri, cuti }: Props) {
           )}
           {negeri && (
             <p className="nota">
-              {negeri} · Kumpulan {kumpulan(negeri)}. Program sekolah akan dipaparkan di sini selepas modul Takwim program dibina.
+              {negeri} · Kumpulan {kumpulan(negeri)}.
             </p>
           )}
         </section>

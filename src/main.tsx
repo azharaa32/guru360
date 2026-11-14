@@ -6,6 +6,7 @@ import { useProfil, useSesi } from './lib/akaun';
 import { useDalamTalian, useLaluan } from './lib/hooks';
 import { useJadual } from './lib/jadual';
 import { binaKalendar, useCutiSendiri } from './lib/kalendar';
+import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
 import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
@@ -29,6 +30,7 @@ function App() {
   const cutiSendiri = useCutiSendiri(sesi?.user.id ?? null, dalamTalian);
   const templat = useTemplat(sesi?.user.id ?? null, dalamTalian);
   const rph = useRph(sesi?.user.id ?? null, dalamTalian);
+  const prog = useProgram(sesi?.user.id ?? null, dalamTalian);
   const negeri = profil?.negeri ?? null;
   const kal = useMemo(() => binaKalendar(negeri, cutiSendiri.cuti), [negeri, cutiSendiri.cuti]);
 
@@ -58,7 +60,7 @@ function App() {
     <div className="apl">
       {jalur}
       {laluan === 'utama' && <Utama profil={profil} sedia={sedia} kal={kal} waktu={jadual.waktu} rph={rph.rph} />}
-      {laluan === 'hariini' && <HariIni kal={kal} waktu={jadual.waktu} rph={rph.rph} cuti={cutiSendiri.cuti} sedia={jadual.sedia} />}
+      {laluan === 'hariini' && <HariIni kal={kal} waktu={jadual.waktu} rph={rph.rph} cuti={cutiSendiri.cuti} program={prog.program} sedia={jadual.sedia} />}
       {laluan === 'jadual' && <Jadual negeri={profil?.negeri ?? null} {...jadual} />}
       {laluan === 'rph' &&
         (() => {
@@ -69,7 +71,18 @@ function App() {
             <RphMinggu {...asas} tarikh={param[0] === 'm' ? param[1] : undefined} />
           );
         })()}
-      {laluan === 'takwim' && <Takwim negeri={profil?.negeri ?? null} cuti={cutiSendiri.cuti} />}
+      {laluan === 'takwim' && (
+        <Takwim
+          negeri={profil?.negeri ?? null}
+          cuti={cutiSendiri.cuti}
+          program={prog.program}
+          programSedia={prog.sedia}
+          programTertunda={prog.tertunda}
+          programRalat={prog.ralat}
+          simpanProgram={prog.simpanProgram}
+          padamProgram={prog.padamProgram}
+        />
+      )}
       {laluan === 'cuti' && <Cuti negeri={profil?.negeri ?? null} {...cutiSendiri} />}
       {laluan === 'profil' && (
         <Profil

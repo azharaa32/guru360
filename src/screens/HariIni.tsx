@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { KepalaKembali } from '../components/Rangka';
 import { julat, label, masa12, minit, type Waktu } from '../lib/jadual';
 import { cutiAkanDatang, hariIni, tambahHari, tarikhMesra, tarikhPenuh, type CutiSendiri, type Kalendar } from '../lib/kalendar';
+import { butirProgram, programAkanDatang, programPada, tamatProgram, type Program } from '../lib/program';
 import { keadaan, kunciMasa, waktuPada, type Rph } from '../lib/rph';
 
 /** Masa sekarang, dikemas kini setiap 30 saat supaya "Sekarang" bergerak sendiri. */
@@ -55,10 +56,11 @@ interface Props {
   waktu: Waktu[];
   rph: Rph[];
   cuti: CutiSendiri[];
+  program: Program[];
   sedia: boolean;
 }
 
-export function HariIni({ kal, waktu, rph, cuti, sedia }: Props) {
+export function HariIni({ kal, waktu, rph, cuti, program, sedia }: Props) {
   const kini = useMasaKini();
   const tarikh = hariIni();
   const status = kal.status(tarikh);
@@ -70,6 +72,10 @@ export function HariIni({ kal, waktu, rph, cuti, sedia }: Props) {
   const seterusnya = useMemo(() => (kelas.length ? null : hariSekolahSeterusnya(kal, waktu, tarikh)), [kelas.length, kal, waktu, tarikh]);
   const cutiDekat = useMemo(() => cutiAkanDatang(kal.negeri, cuti, tambahHari(tarikh, 1), 1)[0], [kal.negeri, cuti, tarikh]);
   const bilHari = cutiDekat ? Math.round((new Date(`${cutiDekat.mula}T00:00`).getTime() - new Date(`${tarikh}T00:00`).getTime()) / 86400000) : 0;
+
+  const programHariIni = useMemo(() => programPada(program, tarikh), [program, tarikh]);
+  const programDekat = useMemo(() => programAkanDatang(program, tambahHari(tarikh, 1)).find((x) => x.tarikh > tarikh), [program, tarikh]);
+  const hariKe = (t: string) => Math.round((new Date(`${t}T00:00`).getTime() - new Date(`${tarikh}T00:00`).getTime()) / 86400000);
 
   const pautan = (w: Waktu, medan?: string) => `#/rph/e/${tarikh}/${kunciMasa(w.mula)}${medan ? `/${medan}` : ''}`;
 
@@ -204,6 +210,31 @@ export function HariIni({ kal, waktu, rph, cuti, sedia }: Props) {
               })}
             </ul>
           </section>
+        )}
+
+        {programHariIni.length > 0 && (
+          <a href="#/takwim" className="kad kad-pautan kad-garis-biru">
+            <span className="kad-pautan-teks">
+              <span className="label-bahagian">PROGRAM HARI INI</span>
+              {programHariIni.map((x) => (
+                <span key={x.id} className="program-baris">
+                  <strong>{x.nama}</strong>
+                  {butirProgram(x) && <span>{butirProgram(x)}</span>}
+                </span>
+              ))}
+            </span>
+          </a>
+        )}
+
+        {programDekat && (
+          <a href="#/takwim" className="kad kad-pautan">
+            <span className="kad-pautan-teks">
+              <span className="label-bahagian">PROGRAM TERDEKAT</span>
+              <strong>{programDekat.nama}</strong>
+              <span>{tarikhMesra(programDekat.tarikh, tamatProgram(programDekat))}</span>
+            </span>
+            <span className="pautan-kecil">{hariKe(programDekat.tarikh) === 1 ? 'Esok' : `${hariKe(programDekat.tarikh)} hari lagi`}</span>
+          </a>
         )}
 
         {cutiDekat && (
