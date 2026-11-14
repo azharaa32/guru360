@@ -41,7 +41,7 @@ export function useSenarai<T extends Rekod>(
   const [tertunda, setTertunda] = useState(false);
   const [ralat, setRalat] = useState<string | null>(null);
   const sibuk = useRef(false);
-  const lagi = useRef(false);
+  const lagi = useRef<null | boolean>(null);
   const pemeta = useRef(dariPelayan);
   pemeta.current = dariPelayan;
   const kunci = uid ? `guru360.${jadual}.${uid}` : null;
@@ -52,11 +52,12 @@ export function useSenarai<T extends Rekod>(
   }, []);
 
   const segerak = useCallback(
-    async (id: string) => {
+    // tarik = false: hantar perubahan sahaja, tanpa memuat semula semua baris (untuk simpanan automatik yang kerap).
+    async (id: string, tarik = true) => {
       const k = `guru360.${jadual}.${id}`;
       if (!navigator.onLine) return;
       if (sibuk.current) {
-        lagi.current = true;
+        lagi.current = lagi.current === true ? true : tarik;
         return;
       }
       sibuk.current = true;
@@ -81,17 +82,21 @@ export function useSenarai<T extends Rekod>(
           s.padam = s.padam.filter((p) => !buang.includes(p));
           tulisStoran(k, s);
         }
-        const { data, error } = await supabase.from(jadual).select(lajur).eq('guru_id', id);
-        if (error) throw new Error(error.message);
-        s = bacaStoran<Stor<T>>(k) ?? kosong<T>();
-        const tempatan = new Map(s.baris.map((b) => [b.id, b]));
-        const pelayan = ((data ?? []) as unknown as T[]).map((b) => pemeta.current(b));
-        const gabung = pelayan.filter((b) => !s.padam.includes(b.id)).map((b) => (s.ubah.includes(b.id) ? (tempatan.get(b.id) ?? b) : b));
-        const adaDiPelayan = new Set(pelayan.map((b) => b.id));
-        for (const u of s.ubah) if (!adaDiPelayan.has(u) && tempatan.has(u)) gabung.push(tempatan.get(u)!);
-        s.baris = gabung;
-        tulisStoran(k, s);
-        papar(s);
+        if (tarik) {
+          const { data, error } = await supabase.from(jadual).select(lajur).eq('guru_id', id);
+          if (error) throw new Error(error.message);
+          s = bacaStoran<Stor<T>>(k) ?? kosong<T>();
+          const tempatan = new Map(s.baris.map((b) => [b.id, b]));
+          const pelayan = ((data ?? []) as unknown as T[]).map((b) => pemeta.current(b));
+          const gabung = pelayan.filter((b) => !s.padam.includes(b.id)).map((b) => (s.ubah.includes(b.id) ? (tempatan.get(b.id) ?? b) : b));
+          const adaDiPelayan = new Set(pelayan.map((b) => b.id));
+          for (const u of s.ubah) if (!adaDiPelayan.has(u) && tempatan.has(u)) gabung.push(tempatan.get(u)!);
+          s.baris = gabung;
+          tulisStoran(k, s);
+          papar(s);
+        } else {
+          papar(s);
+        }
         setRalat(null);
       } catch (e) {
         const mesej = String(e);
@@ -100,9 +105,10 @@ export function useSenarai<T extends Rekod>(
       } finally {
         sibuk.current = false;
         setSedia(true);
-        if (lagi.current) {
-          lagi.current = false;
-          void segerak(id);
+        if (lagi.current !== null) {
+          const semula = lagi.current;
+          lagi.current = null;
+          void segerak(id, semula);
         }
       }
     },
@@ -132,7 +138,7 @@ export function useSenarai<T extends Rekod>(
       tukar(s);
       tulisStoran(kunci, s);
       papar(s);
-      void segerak(uid);
+      void segerak(uid, false);
     },
     [uid, kunci, papar, segerak],
   );

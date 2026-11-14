@@ -17,6 +17,7 @@ const MM = 72 / 25.4;
 const TEPI = { kiri: 25 * MM, kanan: 20 * MM, atas: 15 * MM, bawah: 20 * MM };
 const HITAM = rgb(0.09, 0.09, 0.09);
 const KELABU = rgb(0.35, 0.35, 0.35);
+const KELABU_MUDA = rgb(0.93, 0.94, 0.93);
 const SAIZ_LOGO = 22 * MM;
 
 const ganti: Record<string, string> = {
@@ -205,6 +206,84 @@ export class Dokumen {
     this.y -= mm * MM;
   }
 
+  /**
+   * Baris jadual bersempadan. `lajur` ialah pecahan lebar setiap lajur (jumlah 1).
+   * Baris `tebal` dicetak tebal dengan latar kelabu, untuk tajuk lajur.
+   */
+  grid(lajur: number[], baris: { sel: string[]; tebal?: boolean }[]) {
+    const saiz = 9.5;
+    const tinggiBaris = saiz * 1.35;
+    const pad = 4;
+    for (const b of baris) {
+      const fon = b.tebal ? this.tebal : this.biasa;
+      const lebar = lajur.map((p) => p * this.lebarIsi);
+      const teks = b.sel.map((t, i) => this.balut(t || '', fon, saiz, lebar[i] - pad * 2));
+      const tinggi = Math.max(...teks.map((t) => t.length)) * tinggiBaris + pad * 2;
+      this.perluRuang(tinggi);
+      let x = TEPI.kiri;
+      teks.forEach((barisTeks, i) => {
+        this.halaman.drawRectangle({ x, y: this.y - tinggi, width: lebar[i], height: tinggi, borderColor: HITAM, borderWidth: 0.6, color: b.tebal ? KELABU_MUDA : undefined });
+        barisTeks.forEach((t, j) => {
+          this.halaman.drawText(t, { x: x + pad, y: this.y - pad - (j + 1) * tinggiBaris + tinggiBaris * 0.28, size: saiz, font: fon, color: HITAM });
+        });
+        x += lebar[i];
+      });
+      this.y -= tinggi;
+    }
+  }
+
+  /**
+   * Baris "label | isi" bersempadan. Isi panjang disambung ke halaman seterusnya.
+   * `minBaris` memberi ruang kosong untuk ditulis tangan apabila isi pendek atau kosong.
+   */
+  barisLabel(label: string, teks: string, minBaris = 1) {
+    const saiz = 10;
+    const tinggiBaris = saiz * 1.4;
+    const pad = 5;
+    const lebarLabel = 30 * MM;
+    const lebarIsi = this.lebarIsi - lebarLabel;
+    const semua = teks.trim() ? this.balut(teks.trim(), this.biasa, saiz, lebarIsi - pad * 2) : [];
+    while (semua.length < minBaris) semua.push('');
+    let pertama = true;
+    while (semua.length) {
+      const muat = Math.floor((this.y - TEPI.bawah - pad * 2) / tinggiBaris);
+      if (muat < Math.min(2, semua.length)) {
+        this.halamanBaharu();
+        continue;
+      }
+      const bahagian = semua.splice(0, muat);
+      const tinggi = bahagian.length * tinggiBaris + pad * 2;
+      this.halaman.drawRectangle({ x: TEPI.kiri, y: this.y - tinggi, width: lebarLabel, height: tinggi, borderColor: HITAM, borderWidth: 0.6, color: KELABU_MUDA });
+      this.halaman.drawRectangle({ x: TEPI.kiri + lebarLabel, y: this.y - tinggi, width: lebarIsi, height: tinggi, borderColor: HITAM, borderWidth: 0.6 });
+      this.halaman.drawText(this.bersih(pertama ? label : `${label} (samb.)`), { x: TEPI.kiri + pad, y: this.y - pad - tinggiBaris + tinggiBaris * 0.28, size: pertama ? 9.5 : 8, font: this.tebal, color: HITAM });
+      bahagian.forEach((t, j) => {
+        this.halaman.drawText(t, { x: TEPI.kiri + lebarLabel + pad, y: this.y - pad - (j + 1) * tinggiBaris + tinggiBaris * 0.28, size: saiz, font: this.biasa, color: HITAM });
+      });
+      this.y -= tinggi;
+      pertama = false;
+    }
+  }
+
+  /** Pastikan sekurang-kurangnya `mm` ruang berbaki; jika tidak, mula halaman baharu. */
+  pastikanRuang(mm: number) {
+    this.perluRuang(mm * MM);
+  }
+
+  /** Dua ruang tandatangan sebelah-menyebelah. */
+  tandatangan(kiri: { tajuk: string; nama: string }, kanan: { tajuk: string; nama: string }) {
+    this.perluRuang(32 * MM);
+    this.y -= 8 * MM;
+    const lebar = this.lebarIsi / 2 - 8 * MM;
+    [kiri, kanan].forEach((t, i) => {
+      const x = TEPI.kiri + i * (this.lebarIsi / 2 + 8 * MM);
+      this.halaman.drawText(this.bersih(t.tajuk), { x, y: this.y, size: 10, font: this.biasa, color: HITAM });
+      this.halaman.drawLine({ start: { x, y: this.y - 16 * MM }, end: { x: x + lebar, y: this.y - 16 * MM }, thickness: 0.6, color: HITAM });
+      const nama = this.balut(t.nama ? `(${t.nama})` : '', this.biasa, 9.5, lebar)[0] ?? '';
+      this.halaman.drawText(nama, { x, y: this.y - 16 * MM - 12, size: 9.5, font: this.biasa, color: HITAM });
+    });
+    this.y -= 24 * MM;
+  }
+
   /** Tambah nombor halaman dan pulangkan fail PDF. */
   async siap(): Promise<Uint8Array> {
     const semua = this.pdf.getPages();
@@ -239,5 +318,54 @@ export async function pdfContoh(k: KepalaSurat, guru: { nama: string; sekolah: s
   d.subtajuk('Perkara untuk disemak');
   d.perenggan('1. Logo jelas dan tidak herot.\n2. Nama sekolah dieja dengan betul dan berada di tengah.\n3. Alamat, nombor telefon dan emel sekolah betul.');
   d.perenggan('Jika ada yang perlu dibetulkan, kembali ke skrin Templat sekolah, ubah maklumat, simpan, dan jana semula contoh ini.');
+  return d.siap();
+}
+
+export interface RphPdf {
+  tarikh: string; // sudah diformat, contohnya "ISNIN, 4 JANUARI 2027"
+  masa: string;
+  kelas: string;
+  subjek: string;
+  objektif: string;
+  aktiviti: string;
+  pentaksiran: string;
+  refleksi: string;
+}
+
+/** PDF RPH: satu hari atau seminggu. Setiap RPH ialah satu blok jadual; hari baharu bermula dengan tajuk hari. */
+export async function pdfRph(
+  k: KepalaSurat,
+  guru: { nama: string },
+  tajukKecil: string,
+  hari: { tajuk: string; rph: RphPdf[] }[],
+): Promise<Uint8Array> {
+  const d = await Dokumen.mula(`RPH ${tajukKecil}`);
+  await d.kepalaSurat(k);
+  d.tajuk('RANCANGAN PENGAJARAN HARIAN');
+  d.medan('Nama guru', guru.nama);
+  d.medan(hari.length > 1 ? 'Minggu' : 'Tarikh', tajukKecil);
+  d.jarak(3);
+  for (const h of hari) {
+    if (hari.length > 1) {
+      d.pastikanRuang(60);
+      d.subtajuk(h.tajuk);
+    }
+    for (const r of h.rph) {
+      d.pastikanRuang(55);
+      d.grid(
+        [0.36, 0.22, 0.14, 0.28],
+        [
+          { sel: ['HARI / TARIKH', 'MASA', 'KELAS', 'SUBJEK'], tebal: true },
+          { sel: [r.tarikh, r.masa, r.kelas || '-', r.subjek] },
+        ],
+      );
+      d.barisLabel('OBJEKTIF', r.objektif, 2);
+      d.barisLabel('AKTIVITI', r.aktiviti, 3);
+      d.barisLabel('PENTAKSIRAN', r.pentaksiran, 2);
+      d.barisLabel('REFLEKSI', r.refleksi, 2);
+      d.jarak(5);
+    }
+  }
+  d.tandatangan({ tajuk: 'Disediakan oleh:', nama: guru.nama }, { tajuk: 'Disemak oleh:', nama: '' });
   return d.siap();
 }

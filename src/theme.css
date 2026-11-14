@@ -833,7 +833,9 @@ a.butang {
   gap: 6px;
 }
 
-.tab-hari button {
+.tab-hari button,
+.tab-hari a {
+  text-decoration: none;
   min-height: 52px;
   border-radius: 10px;
   border: 1px solid var(--garis);
@@ -848,18 +850,21 @@ a.butang {
   cursor: pointer;
 }
 
-.tab-hari button .mono {
+.tab-hari button .mono,
+.tab-hari a .mono {
   font-size: 11px;
   color: var(--kelabu);
 }
 
-.tab-hari button[aria-pressed='true'] {
+.tab-hari button[aria-pressed='true'],
+.tab-hari a[aria-pressed='true'] {
   background: var(--hijau-2);
   border-color: var(--hijau-2);
   color: #fff;
 }
 
-.tab-hari button[aria-pressed='true'] .mono {
+.tab-hari button[aria-pressed='true'] .mono,
+.tab-hari a[aria-pressed='true'] .mono {
   color: var(--hijau-pudar);
 }
 
@@ -1234,4 +1239,100 @@ a.jubin {
 
 .mesej-dalam {
   margin: 0 14px;
+}
+
+/* RPH */
+a.baris-waktu {
+  text-decoration: none;
+}
+
+.jalur-waktu {
+  padding: 8px 14px;
+  background: var(--latar);
+  font-size: 12px;
+  color: var(--kelabu);
+  overflow-wrap: anywhere;
+}
+
+.butir-kecil {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--kelabu);
+}
+
+.pil-kosong {
+  color: var(--kelabu);
+  background: var(--garis-halus);
+}
+
+.pil-draf {
+  color: var(--emas-tua);
+  background: var(--emas-lembut);
+}
+
+.pil-siap {
+  color: var(--hijau);
+  background: var(--hijau-lembut);
+}
+
+.status-simpan {
+  flex: none;
+  font-size: 11px;
+  color: var(--hijau-pudar);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.titik {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5fd39b;
+}
+
+.titik-tunggu {
+  background: var(--emas);
+}
+
+.titik-gagal {
+  background: #f08a8a;
+}
+
+.kad-auto {
+  background: var(--hijau-lembut);
+  border-color: #b9d5cb;
+  position: relative;
+}
+
+.kad-auto .label-bahagian {
+  color: var(--hijau-2);
+  font-size: 11px;
+}
+
+.grid-auto {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.grid-auto dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kelabu);
+}
+
+.grid-auto dd {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pil-sudut {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }

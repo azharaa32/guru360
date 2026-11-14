@@ -4,7 +4,7 @@ import type { Profil } from '../lib/akaun';
 import { jenisPeranti, usePasang } from '../lib/hooks';
 
 const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 'merah'; ke?: string }[] = [
-  { nama: 'RPH', ikon: 'rph', warna: 'hijau' },
+  { nama: 'RPH', ikon: 'rph', warna: 'hijau', ke: '#/rph' },
   { nama: 'Jadual', ikon: 'jadual', warna: 'hijau', ke: '#/jadual' },
   { nama: 'Kertas Kerja', ikon: 'kertas', warna: 'biru' },
   { nama: 'Minit', ikon: 'minit', warna: 'biru' },

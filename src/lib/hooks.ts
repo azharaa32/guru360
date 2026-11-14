@@ -1,25 +1,32 @@
 import { useEffect, useState } from 'react';
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config';
 
-export type Laluan = 'utama' | 'takwim' | 'profil' | 'templat' | 'jadual' | 'cuti';
+export type Laluan = 'utama' | 'takwim' | 'profil' | 'templat' | 'jadual' | 'cuti' | 'rph';
+const SEMUA: Laluan[] = ['utama', 'takwim', 'profil', 'templat', 'jadual', 'cuti', 'rph'];
 
-function bacaLaluan(): Laluan {
-  const h = window.location.hash.replace(/^#\/?/, '');
-  return h === 'takwim' || h === 'profil' || h === 'templat' || h === 'jadual' || h === 'cuti' ? h : 'utama';
+export interface Lokasi {
+  nama: Laluan;
+  /** Bahagian selepas nama, contohnya #/rph/2027-01-04/1000 memberi ["2027-01-04", "1000"]. */
+  param: string[];
+}
+
+function bacaLaluan(): Lokasi {
+  const [nama = '', ...param] = window.location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+  return SEMUA.includes(nama as Laluan) ? { nama: nama as Laluan, param } : { nama: 'utama', param: [] };
 }
 
 /** Navigasi guna hash (#/takwim) supaya berfungsi di GitHub Pages tanpa tetapan pelayan. */
-export function useLaluan(): Laluan {
-  const [laluan, setLaluan] = useState<Laluan>(bacaLaluan);
+export function useLaluan(): Lokasi {
+  const [lokasi, setLokasi] = useState<Lokasi>(bacaLaluan);
   useEffect(() => {
     const tukar = () => {
-      setLaluan(bacaLaluan());
+      setLokasi(bacaLaluan());
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', tukar);
     return () => window.removeEventListener('hashchange', tukar);
   }, []);
-  return laluan;
+  return lokasi;
 }
 
 export function useDalamTalian(): boolean {
