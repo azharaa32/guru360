@@ -1,5 +1,6 @@
 import { Ikon, type NamaIkon } from '../components/Ikon';
 import { Kepala } from '../components/Rangka';
+import type { Profil } from '../lib/akaun';
 import { jenisPeranti, usePasang } from '../lib/hooks';
 
 const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 'merah' }[] = [
@@ -45,11 +46,42 @@ function KadPasang() {
   );
 }
 
-export function Utama() {
+function ucapan(): string {
+  const jam = new Date().getHours();
+  if (jam < 12) return 'Selamat pagi,';
+  if (jam < 14) return 'Selamat tengah hari,';
+  if (jam < 19) return 'Selamat petang,';
+  return 'Selamat malam,';
+}
+
+export function Utama({ profil, sedia }: { profil: Profil | null; sedia: boolean }) {
+  const nama = profil?.nama ?? '';
   return (
     <>
-      <Kepala kecil="Selamat datang ke" tajuk="Guru360" sub="Kerja harian guru dalam satu aplikasi" />
+      {nama ? (
+        <Kepala
+          kecil={ucapan()}
+          tajuk={nama}
+          sub={profil?.sekolah || undefined}
+          kanan={
+            <a href="#/profil" className="avatar" aria-label="Buka profil">
+              {nama.charAt(0)}
+            </a>
+          }
+        />
+      ) : (
+        <Kepala kecil="Selamat datang ke" tajuk="Guru360" sub="Kerja harian guru dalam satu aplikasi" />
+      )}
       <main className="isi">
+        {sedia && !nama && (
+          <section className="kad kad-pasang" aria-labelledby="tajuk-lengkap">
+            <h2 id="tajuk-lengkap">Lengkapkan profil anda</h2>
+            <p>Nama dan sekolah anda akan dicetak pada RPH, surat dan dokumen lain.</p>
+            <a href="#/profil" className="butang butang-utama">
+              Isi profil
+            </a>
+          </section>
+        )}
         <KadPasang />
         <section className="bahagian" aria-labelledby="tajuk-modul">
           <h2 id="tajuk-modul" className="label-bahagian">

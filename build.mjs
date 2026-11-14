@@ -21,6 +21,8 @@ const result = await build({
   assetNames: '[name]-[hash]',
   metafile: true,
   define: { 'process.env.NODE_ENV': '"production"' },
+  // Untuk ujian tempatan sahaja: GURU360_SUPABASE_STUB menggantikan pustaka Supabase dengan fail tiruan.
+  alias: process.env.GURU360_SUPABASE_STUB ? { '@supabase/supabase-js': process.env.GURU360_SUPABASE_STUB } : {},
   logLevel: 'info',
 });
 

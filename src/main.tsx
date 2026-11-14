@@ -2,25 +2,57 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Ikon } from './components/Ikon';
 import { NavBawah } from './components/Rangka';
+import { useProfil, useSesi } from './lib/akaun';
 import { useDalamTalian, useLaluan } from './lib/hooks';
 import { Profil, Takwim } from './screens/Lain';
+import { KataLaluanBaharu, Masuk, Memuat } from './screens/Masuk';
 import { Utama } from './screens/Utama';
 import './theme.css';
 
 function App() {
   const laluan = useLaluan();
   const dalamTalian = useDalamTalian();
+  const { keadaan, pemulihan, tamatPemulihan } = useSesi();
+  const sesi = keadaan.status === 'ada' ? keadaan.sesi : null;
+  const { profil, sedia, belumHantar, simpan } = useProfil(sesi?.user.id ?? null, dalamTalian);
+
+  const jalur = !dalamTalian && (
+    <div className="jalur-talian" role="status">
+      <Ikon nama="tiadaTalian" saiz={16} />
+      Tiada internet. Guru360 masih boleh dibuka.
+    </div>
+  );
+
+  if (keadaan.status === 'memuat') return <Memuat />;
+  if (!sesi)
+    return (
+      <div className="apl">
+        {jalur}
+        <Masuk />
+      </div>
+    );
+  if (pemulihan)
+    return (
+      <div className="apl">
+        {jalur}
+        <KataLaluanBaharu selesai={tamatPemulihan} />
+      </div>
+    );
   return (
     <div className="apl">
-      {!dalamTalian && (
-        <div className="jalur-talian" role="status">
-          <Ikon nama="tiadaTalian" saiz={16} />
-          Tiada internet. Guru360 masih boleh dibuka.
-        </div>
-      )}
-      {laluan === 'utama' && <Utama />}
+      {jalur}
+      {laluan === 'utama' && <Utama profil={profil} sedia={sedia} />}
       {laluan === 'takwim' && <Takwim />}
-      {laluan === 'profil' && <Profil dalamTalian={dalamTalian} />}
+      {laluan === 'profil' && (
+        <Profil
+          dalamTalian={dalamTalian}
+          emel={sesi.user.email ?? ''}
+          profil={profil}
+          sedia={sedia}
+          belumHantar={belumHantar}
+          simpan={simpan}
+        />
+      )}
       <NavBawah aktif={laluan} />
     </div>
   );
