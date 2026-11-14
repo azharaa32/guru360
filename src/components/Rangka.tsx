@@ -9,7 +9,7 @@ const tab: { id: 'utama' | 'takwim' | 'profil'; label: string; href: string }[] 
 ];
 
 export function NavBawah({ aktif: laluan }: { aktif: Laluan }) {
-  const aktif = laluan === 'templat' ? 'profil' : laluan;
+  const aktif = laluan === 'templat' ? 'profil' : laluan === 'jadual' ? 'utama' : laluan;
   return (
     <nav className="nav-bawah" aria-label="Navigasi utama">
       {tab.map((t) => (
@@ -44,5 +44,21 @@ export function Kosong({ ikon, tajuk, children }: { ikon: 'takwim' | 'profil'; t
       <h2>{tajuk}</h2>
       <p>{children}</p>
     </section>
+  );
+}
+
+export function KepalaKembali({ ke, labelKembali, tajuk, sub }: { ke: string; labelKembali: string; tajuk: string; sub?: string }) {
+  return (
+    <header className="kepala kepala-kembali">
+      <a href={ke} className="butang-kembali" aria-label={labelKembali}>
+        <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+      </a>
+      <div className="kepala-teks">
+        <h1>{tajuk}</h1>
+        {sub && <span className="kepala-kecil">{sub}</span>}
+      </div>
+    </header>
   );
 }

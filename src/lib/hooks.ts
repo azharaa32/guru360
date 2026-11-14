@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config';
 
-export type Laluan = 'utama' | 'takwim' | 'profil' | 'templat';
+export type Laluan = 'utama' | 'takwim' | 'profil' | 'templat' | 'jadual';
 
 function bacaLaluan(): Laluan {
   const h = window.location.hash.replace(/^#\/?/, '');
-  return h === 'takwim' || h === 'profil' || h === 'templat' ? h : 'utama';
+  return h === 'takwim' || h === 'profil' || h === 'templat' || h === 'jadual' ? h : 'utama';
 }
 
 /** Navigasi guna hash (#/takwim) supaya berfungsi di GitHub Pages tanpa tetapan pelayan. */

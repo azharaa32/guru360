@@ -3,9 +3,9 @@ import { Kepala } from '../components/Rangka';
 import type { Profil } from '../lib/akaun';
 import { jenisPeranti, usePasang } from '../lib/hooks';
 
-const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 'merah' }[] = [
+const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 'merah'; ke?: string }[] = [
   { nama: 'RPH', ikon: 'rph', warna: 'hijau' },
-  { nama: 'Jadual', ikon: 'jadual', warna: 'hijau' },
+  { nama: 'Jadual', ikon: 'jadual', warna: 'hijau', ke: '#/jadual' },
   { nama: 'Kertas Kerja', ikon: 'kertas', warna: 'biru' },
   { nama: 'Minit', ikon: 'minit', warna: 'biru' },
   { nama: 'Memo', ikon: 'memo', warna: 'emas' },
@@ -54,7 +54,7 @@ function ucapan(): string {
   return 'Selamat malam,';
 }
 
-export function Utama({ profil, sedia }: { profil: Profil | null; sedia: boolean }) {
+export function Utama({ profil, sedia, bilWaktu }: { profil: Profil | null; sedia: boolean; bilWaktu: number }) {
   const nama = profil?.nama ?? '';
   return (
     <>
@@ -88,15 +88,27 @@ export function Utama({ profil, sedia }: { profil: Profil | null; sedia: boolean
             MODUL
           </h2>
           <ul className="grid-modul">
-            {modul.map((m) => (
-              <li key={m.nama} className="jubin" aria-label={`${m.nama}, akan datang`}>
-                <span className={`jubin-ikon warna-${m.warna}`}>
-                  <Ikon nama={m.ikon} />
-                </span>
-                <span className="jubin-nama">{m.nama}</span>
-                <span className="jubin-status">Akan datang</span>
-              </li>
-            ))}
+            {modul.map((m) =>
+              m.ke ? (
+                <li key={m.nama}>
+                  <a href={m.ke} className="jubin jubin-aktif">
+                    <span className={`jubin-ikon warna-${m.warna}`}>
+                      <Ikon nama={m.ikon} />
+                    </span>
+                    <span className="jubin-nama">{m.nama}</span>
+                    <span className="jubin-status">{m.nama === 'Jadual' ? (bilWaktu ? `${bilWaktu} waktu` : 'Isi sekarang') : 'Buka'}</span>
+                  </a>
+                </li>
+              ) : (
+                <li key={m.nama} className="jubin" aria-label={`${m.nama}, akan datang`}>
+                  <span className={`jubin-ikon warna-${m.warna}`}>
+                    <Ikon nama={m.ikon} />
+                  </span>
+                  <span className="jubin-nama">{m.nama}</span>
+                  <span className="jubin-status">Akan datang</span>
+                </li>
+              ),
+            )}
           </ul>
           <p className="nota">Modul dibuka satu demi satu. Kemas kini sampai sendiri apabila aplikasi dibuka semula.</p>
         </section>
