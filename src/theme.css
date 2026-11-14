@@ -1842,3 +1842,60 @@ a.acara-butang {
   text-decoration: none;
   color: var(--dakwat);
 }
+
+/* Memo dan surat */
+.grid-templat {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.grid-templat li {
+  display: flex;
+}
+
+.jubin-templat {
+  width: 100%;
+  min-height: 96px;
+  gap: 4px;
+  text-align: left;
+  font: inherit;
+  color: var(--dakwat);
+  cursor: pointer;
+  border-top: 3px solid #b7892b;
+  justify-content: flex-start;
+}
+
+.jubin-templat strong {
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.jubin-templat span {
+  font-size: 12px;
+  color: var(--kelabu);
+}
+
+.jubin-templat:active {
+  background: var(--emas-lembut);
+}
+
+.kumpulan {
+  border: 1px solid var(--garis);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kumpulan legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kelabu);
+}

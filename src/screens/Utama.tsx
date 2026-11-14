@@ -13,8 +13,8 @@ const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 
   { nama: 'Jadual', ikon: 'jadual', warna: 'hijau', ke: '#/jadual' },
   { nama: 'Kertas Kerja', ikon: 'kertas', warna: 'biru', ke: '#/kertas' },
   { nama: 'Minit', ikon: 'minit', warna: 'biru' },
-  { nama: 'Memo', ikon: 'memo', warna: 'emas' },
-  { nama: 'Surat', ikon: 'surat', warna: 'emas' },
+  { nama: 'Memo', ikon: 'memo', warna: 'emas', ke: '#/surat' },
+  { nama: 'Surat', ikon: 'surat', warna: 'emas', ke: '#/surat' },
   { nama: 'OPR', ikon: 'opr', warna: 'merah' },
   { nama: 'Jobskop', ikon: 'jobskop', warna: 'merah' },
 ];

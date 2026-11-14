@@ -141,3 +141,121 @@ export function kemasKertas(i: IsiKertasKerja): IsiKertasKerja {
     belanja: i.belanja.filter((b) => ada(b.perkara)).map((b) => ({ perkara: b.perkara, kuantiti: Number(b.kuantiti) || 0, harga: Number(b.harga) || 0 })),
   });
 }
+
+// ---------------------------------------------------------------- Memo dan surat
+
+export type TemplatSurat = 'mesyuarat' | 'kebenaran' | 'iringan' | 'memo';
+
+export interface IsiSurat {
+  templat: TemplatSurat;
+  rujukan: string;
+  tarikh: string; // tarikh surat, YYYY-MM-DD
+  kepada: string; // satu baris bagi setiap baris alamat penerima
+  daripada: string; // memo sahaja
+  pembuka: string;
+  acara_tarikh: string; // YYYY-MM-DD
+  acara_masa: string;
+  acara_tempat: string;
+  senarai: string[]; // agenda mesyuarat, atau dokumen yang disertakan
+  penutup: string;
+  penandatangan: Orang;
+}
+
+export const TEMPLAT_SURAT: Record<TemplatSurat, { nama: string; ringkas: string; jenis: JenisDokumen; adaButiran: boolean; labelSenarai: string | null; kepada: string; pembuka: string; penutup: string }> = {
+  mesyuarat: {
+    nama: 'Panggilan Mesyuarat',
+    ringkas: 'Jemput ahli ke mesyuarat, dengan agenda',
+    jenis: 'surat',
+    adaButiran: true,
+    labelSenarai: 'Agenda',
+    kepada: '',
+    pembuka: 'Dengan segala hormatnya perkara di atas dirujuk.\n\nTuan/puan dijemput hadir ke mesyuarat seperti butiran berikut:',
+    penutup: 'Kehadiran dan kerjasama tuan/puan amat dihargai.',
+  },
+  kebenaran: {
+    nama: 'Kebenaran Ibu Bapa',
+    ringkas: 'Mohon kebenaran penjaga, dengan keratan jawapan',
+    jenis: 'surat',
+    adaButiran: true,
+    labelSenarai: null,
+    kepada: 'Ibu bapa / penjaga murid',
+    pembuka: 'Dengan segala hormatnya perkara di atas dirujuk.\n\nSukacita dimaklumkan bahawa anak jagaan tuan/puan telah dipilih untuk menyertai program seperti butiran berikut:',
+    penutup: 'Sehubungan itu, pihak sekolah memohon kebenaran tuan/puan. Sila lengkapkan keratan jawapan di bawah dan kembalikannya kepada guru kelas.',
+  },
+  iringan: {
+    nama: 'Surat Iringan',
+    ringkas: 'Iringi dokumen yang dihantar',
+    jenis: 'surat',
+    adaButiran: false,
+    labelSenarai: 'Dokumen disertakan',
+    kepada: '',
+    pembuka: 'Dengan segala hormatnya perkara di atas dirujuk.\n\nBersama-sama ini disertakan dokumen berikut untuk makluman dan tindakan tuan/puan selanjutnya:',
+    penutup: 'Kerjasama dan perhatian tuan/puan amat dihargai.',
+  },
+  memo: {
+    nama: 'Memo Dalaman',
+    ringkas: 'Makluman ringkas dalam sekolah',
+    jenis: 'memo',
+    adaButiran: false,
+    labelSenarai: null,
+    kepada: 'Semua guru',
+    pembuka: '',
+    penutup: '',
+  },
+};
+
+export function suratKosong(templat: TemplatSurat, tarikh: string, rujukan: string, penandatangan: Orang): IsiSurat {
+  const t = TEMPLAT_SURAT[templat];
+  return {
+    templat,
+    rujukan,
+    tarikh,
+    kepada: t.kepada,
+    daripada: templat === 'memo' ? penandatangan.nama : '',
+    pembuka: t.pembuka,
+    acara_tarikh: '',
+    acara_masa: '',
+    acara_tempat: '',
+    senarai: t.labelSenarai ? [''] : [],
+    penutup: t.penutup,
+    penandatangan,
+  };
+}
+
+export function isiSurat(d: Dokumen | undefined): IsiSurat {
+  const i = (d?.isi ?? {}) as Partial<IsiSurat>;
+  const templat: TemplatSurat = i.templat && i.templat in TEMPLAT_SURAT ? i.templat : d?.jenis === 'memo' ? 'memo' : 'mesyuarat';
+  const asas = suratKosong(templat, '', '', { jawatan: '', nama: '' });
+  return { ...asas, ...i, templat, senarai: Array.isArray(i.senarai) ? i.senarai : asas.senarai, penandatangan: { ...asas.penandatangan, ...(i.penandatangan ?? {}) } };
+}
+
+/** Rujukan seterusnya: nombor dalam kurungan terakhir ditambah satu, contohnya "SRIB/600-1/4 (12)" menjadi "(13)". */
+export function rujukanSeterusnya(terakhir: string | undefined): string {
+  if (!terakhir) return '';
+  const padan = terakhir.match(/^(.*\()(\d+)(\)\s*)$/);
+  return padan ? `${padan[1]}${Number(padan[2]) + 1}${padan[3]}` : terakhir;
+}
+
+/** Surat sedia dicetak apabila ada penerima, perkara dan penandatangan. */
+export function suratLengkap(tajuk: string, i: IsiSurat): boolean {
+  const ada = (s: string) => s.trim().length > 0;
+  return ada(tajuk) && ada(i.kepada) && ada(i.tarikh) && ada(i.penandatangan.nama) && (!TEMPLAT_SURAT[i.templat].adaButiran || (ada(i.acara_tarikh) && ada(i.acara_tempat)));
+}
+
+const rapi = (s: string) => s.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+
+/** Kemaskan sebelum simpan: isi surat kekal seperti ditaip; rujukan, tempat dan nama dalam huruf besar. */
+export function kemasSurat(i: IsiSurat): IsiSurat {
+  return {
+    ...i,
+    rujukan: i.rujukan.trim().toUpperCase(),
+    kepada: rapi(i.kepada),
+    daripada: i.daripada.trim().toUpperCase(),
+    pembuka: rapi(i.pembuka),
+    acara_masa: i.acara_masa.trim(),
+    acara_tempat: i.acara_tempat.trim(),
+    senarai: i.senarai.map((s) => s.trim()).filter(Boolean),
+    penutup: rapi(i.penutup),
+    penandatangan: besarkan(i.penandatangan),
+  };
+}

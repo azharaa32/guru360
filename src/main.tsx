@@ -18,6 +18,7 @@ import { Jadual } from './screens/Jadual';
 import { KertasEdit, KertasSenarai } from './screens/KertasKerja';
 import { KataLaluanBaharu, Masuk, Memuat } from './screens/Masuk';
 import { RphEdit, RphMinggu } from './screens/Rph';
+import { SuratEdit, SuratSenarai } from './screens/Surat';
 import { Templat } from './screens/Templat';
 import { Utama } from './screens/Utama';
 import './theme.css';
@@ -78,6 +79,11 @@ function App() {
         (() => {
           const asas = { ...dok, program: prog.program, profil, templat: templat.templat, logo: templat.logo };
           return param[0] && param[0] !== 'p' ? <KertasEdit key={param[0]} {...asas} id={param[0]} /> : <KertasSenarai {...asas} programId={param[0] === 'p' ? param[1] : undefined} />;
+        })()}
+      {laluan === 'surat' &&
+        (() => {
+          const asas = { ...dok, program: prog.program, profil, templat: templat.templat, logo: templat.logo };
+          return param[0] && param[0] !== 'p' ? <SuratEdit key={param[0]} {...asas} id={param[0]} /> : <SuratSenarai {...asas} programId={param[0] === 'p' ? param[1] : undefined} />;
         })()}
       {laluan === 'takwim' && (
         <Takwim

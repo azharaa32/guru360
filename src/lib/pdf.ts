@@ -303,6 +303,58 @@ export class Dokumen {
     this.y -= 3 * MM;
   }
 
+  /** Dua teks pada satu baris: satu di kiri, satu rapat ke kanan (rujukan dan tarikh surat). */
+  duaSisi(kiri: string, kanan: string) {
+    const saiz = 11;
+    this.perluRuang(saiz * 1.5);
+    this.y -= saiz * 1.5;
+    const k = this.bersih(kiri);
+    const n = this.bersih(kanan);
+    this.halaman.drawText(k, { x: TEPI.kiri, y: this.y + 4, size: saiz, font: this.biasa, color: HITAM });
+    this.halaman.drawText(n, { x: A4.lebar - TEPI.kanan - this.biasa.widthOfTextAtSize(n, saiz), y: this.y + 4, size: saiz, font: this.biasa, color: HITAM });
+  }
+
+  /** Baris teks biasa tanpa jarak perenggan (alamat penerima, kata penutup). */
+  baris(teks: string, tebal = false) {
+    const fon = tebal ? this.tebal : this.biasa;
+    this.tulisBaris(this.balut(teks, fon, 11, this.lebarIsi), fon, 11, { jarak: 1.4 });
+  }
+
+  /** Tajuk perkara surat: tebal dan bergaris bawah. */
+  perkara(teks: string) {
+    const saiz = 11;
+    const tinggiBaris = saiz * 1.45;
+    for (const b of this.balut(teks, this.tebal, saiz, this.lebarIsi)) {
+      this.perluRuang(tinggiBaris);
+      this.y -= tinggiBaris;
+      this.halaman.drawText(b, { x: TEPI.kiri, y: this.y + 4, size: saiz, font: this.tebal, color: HITAM });
+      this.halaman.drawLine({ start: { x: TEPI.kiri, y: this.y + 2 }, end: { x: TEPI.kiri + this.tebal.widthOfTextAtSize(b, saiz), y: this.y + 2 }, thickness: 0.7, color: HITAM });
+    }
+    this.y -= 3 * MM;
+  }
+
+  /** Garis putus-putus merentas halaman, untuk keratan jawapan. */
+  garisPutus(label: string) {
+    this.perluRuang(12 * MM);
+    this.y -= 6 * MM;
+    this.halaman.drawLine({ start: { x: TEPI.kiri, y: this.y }, end: { x: A4.lebar - TEPI.kanan, y: this.y }, thickness: 0.6, color: HITAM, dashArray: [4, 3] });
+    const t = this.bersih(label);
+    const l = this.biasa.widthOfTextAtSize(t, 8);
+    this.halaman.drawRectangle({ x: (A4.lebar - l) / 2 - 4, y: this.y - 4, width: l + 8, height: 8, color: rgb(1, 1, 1) });
+    this.halaman.drawText(t, { x: (A4.lebar - l) / 2, y: this.y - 3, size: 8, font: this.biasa, color: KELABU });
+    this.y -= 5 * MM;
+  }
+
+  /** Ruang tandatangan tunggal di kiri: garis kosong, kemudian nama dan jawatan. */
+  tandatanganKiri(nama: string, jawatan: string) {
+    this.perluRuang(26 * MM);
+    this.y -= 16 * MM;
+    this.halaman.drawLine({ start: { x: TEPI.kiri, y: this.y }, end: { x: TEPI.kiri + 70 * MM, y: this.y }, thickness: 0.6, color: HITAM });
+    this.y -= 2;
+    if (nama) this.baris(`(${nama})`, true);
+    if (jawatan) this.baris(jawatan);
+  }
+
   /** Tambah nombor halaman dan pulangkan fail PDF. */
   async siap(): Promise<Uint8Array> {
     const semua = this.pdf.getPages();
@@ -471,5 +523,91 @@ export async function pdfKertasKerja(k: KepalaSurat, kk: KertasKerjaPdf): Promis
     { tajuk: 'Disediakan oleh:', nama: kk.disediakan.nama, jawatan: kk.disediakan.jawatan },
     { tajuk: 'Disahkan oleh:', nama: kk.disahkan.nama, jawatan: kk.disahkan.jawatan },
   );
+  return d.siap();
+}
+
+export interface SuratPdf {
+  templat: 'mesyuarat' | 'kebenaran' | 'iringan' | 'memo';
+  rujukan: string;
+  tarikh: string; // sudah diformat
+  kepada: string;
+  daripada: string;
+  perkara: string;
+  pembuka: string;
+  butiran: { tarikh: string; masa: string; tempat: string } | null;
+  labelSenarai: string | null;
+  senarai: string[];
+  penutup: string;
+  penandatangan: { nama: string; jawatan: string };
+}
+
+/** PDF surat rasmi atau memo dalaman, dengan kepala surat sekolah. */
+export async function pdfSurat(k: KepalaSurat, s: SuratPdf): Promise<Uint8Array> {
+  const d = await Dokumen.mula(s.perkara || (s.templat === 'memo' ? 'Memo' : 'Surat'));
+  await d.kepalaSurat(k);
+  const perenggan = (teks: string) => teks.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).forEach((x) => d.perenggan(x));
+
+  if (s.templat === 'memo') {
+    d.tajuk('MEMO DALAMAN');
+    d.grid(
+      [0.24, 0.76],
+      [
+        { sel: ['KEPADA', s.kepada.replace(/\n/g, ', ')] },
+        { sel: ['DARIPADA', s.daripada] },
+        { sel: ['TARIKH', s.tarikh] },
+        ...(s.rujukan ? [{ sel: ['RUJUKAN', s.rujukan] }] : []),
+        { sel: ['PERKARA', s.perkara] },
+      ],
+    );
+    d.jarak(6);
+    perenggan(s.pembuka);
+    perenggan(s.penutup);
+    d.baris('Sekian, terima kasih.');
+    d.tandatanganKiri(s.penandatangan.nama, s.penandatangan.jawatan);
+    return d.siap();
+  }
+
+  d.duaSisi(s.rujukan ? `Ruj. Kami : ${s.rujukan}` : '', `Tarikh : ${s.tarikh}`);
+  d.jarak(5);
+  s.kepada.split('\n').filter((x) => x.trim()).forEach((x) => d.baris(x.trim()));
+  d.jarak(5);
+  d.baris('Tuan/Puan,');
+  d.jarak(3);
+  d.perkara(s.perkara || '(PERKARA BELUM DIISI)');
+  perenggan(s.pembuka);
+  if (s.butiran) {
+    d.medan('Tarikh', s.butiran.tarikh);
+    d.medan('Masa', s.butiran.masa);
+    d.medan('Tempat', s.butiran.tempat);
+    d.jarak(4);
+  }
+  if (s.labelSenarai && s.senarai.length) {
+    d.baris(`${s.labelSenarai}:`, true);
+    d.jarak(1);
+    d.senarai(s.senarai, (i) => `${i + 1}.`);
+  }
+  perenggan(s.penutup);
+  d.baris('Sekian, terima kasih.');
+  d.jarak(4);
+  d.baris('"BERKHIDMAT UNTUK NEGARA"', true);
+  d.jarak(4);
+  d.baris('Saya yang menjalankan amanah,');
+  d.tandatanganKiri(s.penandatangan.nama, s.penandatangan.jawatan);
+
+  if (s.templat === 'kebenaran') {
+    d.pastikanRuang(75);
+    d.garisPutus('potong di sini');
+    d.tajuk('KERATAN JAWAPAN');
+    d.perenggan(`Saya ............................................................ ibu / bapa / penjaga kepada ............................................................ kelas ..................... MEMBENARKAN / TIDAK MEMBENARKAN* anak jagaan saya menyertai ${s.perkara || 'program ini'}${s.butiran?.tarikh ? ` pada ${s.butiran.tarikh}` : ''}.`);
+    d.baris('Tandatangan      : ........................................');
+    d.jarak(2);
+    d.baris('Nama                 : ........................................');
+    d.jarak(2);
+    d.baris('No. telefon        : ........................................');
+    d.jarak(2);
+    d.baris('Tarikh                : ........................................');
+    d.jarak(3);
+    d.baris('* Potong yang tidak berkenaan.');
+  }
   return d.siap();
 }
