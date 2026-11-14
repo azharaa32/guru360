@@ -5,8 +5,11 @@ import { NavBawah } from './components/Rangka';
 import { useProfil, useSesi } from './lib/akaun';
 import { useDalamTalian, useLaluan } from './lib/hooks';
 import { useJadual } from './lib/jadual';
+import { useCutiSendiri } from './lib/kalendar';
 import { useTemplat } from './lib/templat';
-import { Profil, Takwim } from './screens/Lain';
+import { Profil } from './screens/Lain';
+import { Takwim } from './screens/Takwim';
+import { Cuti } from './screens/Cuti';
 import { Jadual } from './screens/Jadual';
 import { KataLaluanBaharu, Masuk, Memuat } from './screens/Masuk';
 import { Templat } from './screens/Templat';
@@ -20,6 +23,7 @@ function App() {
   const sesi = keadaan.status === 'ada' ? keadaan.sesi : null;
   const { profil, sedia, belumHantar, simpan } = useProfil(sesi?.user.id ?? null, dalamTalian);
   const jadual = useJadual(sesi?.user.id ?? null, dalamTalian);
+  const cutiSendiri = useCutiSendiri(sesi?.user.id ?? null, dalamTalian);
   const templat = useTemplat(sesi?.user.id ?? null, dalamTalian);
 
   const jalur = !dalamTalian && (
@@ -49,7 +53,8 @@ function App() {
       {jalur}
       {laluan === 'utama' && <Utama profil={profil} sedia={sedia} bilWaktu={jadual.waktu.length} />}
       {laluan === 'jadual' && <Jadual negeri={profil?.negeri ?? null} {...jadual} />}
-      {laluan === 'takwim' && <Takwim />}
+      {laluan === 'takwim' && <Takwim negeri={profil?.negeri ?? null} cuti={cutiSendiri.cuti} />}
+      {laluan === 'cuti' && <Cuti negeri={profil?.negeri ?? null} {...cutiSendiri} />}
       {laluan === 'profil' && (
         <Profil
           dalamTalian={dalamTalian}

@@ -1,22 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Kepala, Kosong } from '../components/Rangka';
+import { Kepala } from '../components/Rangka';
 import { NEGERI, PROFIL_KOSONG, type HasilSimpan, type Profil as DataProfil } from '../lib/akaun';
 import { APP_VERSION } from '../lib/config';
 import { sudahDipasang, usePelayan, type StatusPelayan } from '../lib/hooks';
 import { supabase } from '../lib/supabase';
-
-export function Takwim() {
-  return (
-    <>
-      <Kepala tajuk="Takwim" sub="Program dan cuti sekolah" />
-      <main className="isi">
-        <Kosong ikon="takwim" tajuk="Belum ada program">
-          Kalendar program, cuti dan penggal KPM akan dibuka di sini dalam kemas kini akan datang.
-        </Kosong>
-      </main>
-    </>
-  );
-}
 
 const teksPelayan: Record<StatusPelayan, string> = {
   menyemak: 'Menyemak…',
