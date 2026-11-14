@@ -152,6 +152,16 @@ export function Profil({ dalamTalian, emel, profil, sedia, belumHantar, simpan }
           </button>
         </form>
 
+        <a href="#/templat" className="kad kad-pautan">
+          <span className="kad-pautan-teks">
+            <strong>Templat sekolah saya</strong>
+            <span>Kepala surat dan logo untuk semua dokumen</span>
+          </span>
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </a>
+
         <section className="kad" aria-labelledby="tajuk-tentang">
           <h2 id="tajuk-tentang" className="kad-tajuk">
             Tentang aplikasi

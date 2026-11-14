@@ -640,3 +640,171 @@ a.butang {
 .kepala h1 {
   overflow-wrap: anywhere;
 }
+
+/* Templat sekolah */
+.kepala-kembali {
+  padding-left: 12px;
+  gap: 8px;
+}
+
+.kepala-kembali h1 {
+  font-size: 20px;
+}
+
+.butang-kembali {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  border-radius: 12px;
+}
+
+.medan textarea {
+  width: 100%;
+  border: 1px solid #b9c5bf;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: 500 16px/1.4 var(--fon);
+  color: var(--dakwat);
+  background: #fff;
+  resize: vertical;
+}
+
+.medan textarea.besar {
+  text-transform: uppercase;
+}
+
+.medan textarea:focus-visible {
+  outline: 3px solid var(--emas);
+  outline-offset: 1px;
+  border-color: var(--hijau);
+}
+
+.dua-logo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.petak-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.logo-bingkai {
+  width: 88px;
+  height: 88px;
+  border: 1.5px dashed #9aa8a2;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--kelabu);
+  background: #fff;
+  overflow: hidden;
+}
+
+.logo-bingkai img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.petak-logo-nama {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.butang-kecil {
+  min-height: 44px;
+  font-size: 14px;
+  padding: 0 14px;
+}
+
+.kad-pautan {
+  flex-direction: row;
+  align-items: center;
+  text-decoration: none;
+  color: var(--dakwat);
+  min-height: 64px;
+}
+
+.kad-pautan svg {
+  flex: none;
+  color: var(--kelabu);
+}
+
+.kad-pautan-teks {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+}
+
+.kad-pautan-teks span {
+  font-size: 13px;
+  color: var(--kelabu);
+}
+
+/* Pratonton helaian A4 (bahagian atas sahaja) */
+.helaian {
+  background: #fff;
+  border: 1px solid var(--garis);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(23, 33, 29, 0.08);
+  padding: 14px 12px 22px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #171717;
+}
+
+.helaian-kepala {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.helaian-logo {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.helaian-logo img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.helaian-teks {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-size: 8px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.helaian-teks strong {
+  font-size: 10.5px;
+  line-height: 1.25;
+}
+
+.helaian-garis {
+  margin-top: 8px;
+  border-top: 2px solid #171717;
+  border-bottom: 1px solid #171717;
+  height: 4px;
+}

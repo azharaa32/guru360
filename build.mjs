@@ -15,6 +15,8 @@ const result = await build({
   sourcemap: false,
   target: ['es2020'],
   format: 'esm',
+  splitting: true,
+  chunkNames: 'bahagian-[hash]',
   jsx: 'automatic',
   outdir: path.join(out, 'assets'),
   entryNames: '[name]-[hash]',
@@ -27,8 +29,9 @@ const result = await build({
 });
 
 const built = Object.keys(result.metafile.outputs).map((f) => path.relative(out, f).split(path.sep).join('/'));
-const js = built.find((f) => f.endsWith('.js'));
+const js = built.find((f) => /assets\/app-[^/]+\.js$/.test(f));
 const css = built.find((f) => f.endsWith('.css'));
+const lain = built.filter((f) => f !== js && f !== css);
 if (!js || !css) throw new Error('Fail app.js atau app.css tidak terhasil');
 
 await cp('public', out, { recursive: true });
@@ -38,8 +41,8 @@ await writeFile(path.join(out, 'index.html'), html);
 
 // Senarai fail untuk disimpan oleh service worker supaya aplikasi dibuka tanpa internet.
 const icons = (await readdir(path.join(out, 'icons'))).map((f) => `./icons/${f}`);
-const precache = ['./', './index.html', './manifest.webmanifest', `./${js}`, `./${css}`, ...icons];
-const version = path.basename(js, '.js').split('-').pop() + path.basename(css, '.css').split('-').pop();
+const precache = ['./', './index.html', './manifest.webmanifest', `./${js}`, `./${css}`, ...lain.map((f) => `./${f}`), ...icons];
+const version = [js, css, ...lain].map((f) => path.basename(f).replace(/\.\w+$/, '').split('-').pop()).join('');
 const sw = (await readFile('src/sw.js', 'utf8'))
   .replace("'%VERSION%'", JSON.stringify(version))
   .replace("'%PRECACHE%'", JSON.stringify(precache));

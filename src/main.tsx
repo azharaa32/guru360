@@ -4,8 +4,10 @@ import { Ikon } from './components/Ikon';
 import { NavBawah } from './components/Rangka';
 import { useProfil, useSesi } from './lib/akaun';
 import { useDalamTalian, useLaluan } from './lib/hooks';
+import { useTemplat } from './lib/templat';
 import { Profil, Takwim } from './screens/Lain';
 import { KataLaluanBaharu, Masuk, Memuat } from './screens/Masuk';
+import { Templat } from './screens/Templat';
 import { Utama } from './screens/Utama';
 import './theme.css';
 
@@ -15,6 +17,7 @@ function App() {
   const { keadaan, pemulihan, tamatPemulihan } = useSesi();
   const sesi = keadaan.status === 'ada' ? keadaan.sesi : null;
   const { profil, sedia, belumHantar, simpan } = useProfil(sesi?.user.id ?? null, dalamTalian);
+  const templat = useTemplat(sesi?.user.id ?? null, dalamTalian);
 
   const jalur = !dalamTalian && (
     <div className="jalur-talian" role="status">
@@ -51,6 +54,17 @@ function App() {
           sedia={sedia}
           belumHantar={belumHantar}
           simpan={simpan}
+        />
+      )}
+      {laluan === 'templat' && (
+        <Templat
+          profil={profil}
+          templat={templat.templat}
+          sedia={templat.sedia}
+          belumHantar={templat.belumHantar}
+          logo={templat.logo}
+          simpan={templat.simpan}
+          tetapLogo={templat.tetapLogo}
         />
       )}
       <NavBawah aktif={laluan} />

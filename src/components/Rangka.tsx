@@ -2,13 +2,14 @@ import type { ReactNode } from 'react';
 import type { Laluan } from '../lib/hooks';
 import { Ikon } from './Ikon';
 
-const tab: { id: Laluan; label: string; href: string }[] = [
+const tab: { id: 'utama' | 'takwim' | 'profil'; label: string; href: string }[] = [
   { id: 'utama', label: 'Utama', href: '#/' },
   { id: 'takwim', label: 'Takwim', href: '#/takwim' },
   { id: 'profil', label: 'Profil', href: '#/profil' },
 ];
 
-export function NavBawah({ aktif }: { aktif: Laluan }) {
+export function NavBawah({ aktif: laluan }: { aktif: Laluan }) {
+  const aktif = laluan === 'templat' ? 'profil' : laluan;
   return (
     <nav className="nav-bawah" aria-label="Navigasi utama">
       {tab.map((t) => (
