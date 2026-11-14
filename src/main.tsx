@@ -11,6 +11,7 @@ import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
 import { Takwim } from './screens/Takwim';
 import { Cuti } from './screens/Cuti';
+import { HariIni } from './screens/HariIni';
 import { Jadual } from './screens/Jadual';
 import { KataLaluanBaharu, Masuk, Memuat } from './screens/Masuk';
 import { RphEdit, RphMinggu } from './screens/Rph';
@@ -56,13 +57,14 @@ function App() {
   return (
     <div className="apl">
       {jalur}
-      {laluan === 'utama' && <Utama profil={profil} sedia={sedia} bilWaktu={jadual.waktu.length} />}
+      {laluan === 'utama' && <Utama profil={profil} sedia={sedia} kal={kal} waktu={jadual.waktu} rph={rph.rph} />}
+      {laluan === 'hariini' && <HariIni kal={kal} waktu={jadual.waktu} rph={rph.rph} cuti={cutiSendiri.cuti} sedia={jadual.sedia} />}
       {laluan === 'jadual' && <Jadual negeri={profil?.negeri ?? null} {...jadual} />}
       {laluan === 'rph' &&
         (() => {
           const asas = { uid: sesi.user.id, profil, kal, waktu: jadual.waktu, templat: templat.templat, logo: templat.logo, ...rph };
           return param[0] === 'e' ? (
-            <RphEdit key={`${param[1]}/${param[2]}`} {...asas} tarikh={param[1]} kunci={param[2]} />
+            <RphEdit key={`${param[1]}/${param[2]}`} {...asas} tarikh={param[1]} kunci={param[2]} fokus={param[3]} />
           ) : (
             <RphMinggu {...asas} tarikh={param[0] === 'm' ? param[1] : undefined} />
           );

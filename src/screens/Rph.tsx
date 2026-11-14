@@ -248,7 +248,7 @@ const MEDAN: { id: keyof Isi; label: string; baris: number; maks: number; bantua
 ];
 const kemasIsi = (s: string) => s.replace(/[ \t]+\n/g, '\n').trim().toUpperCase();
 
-export function RphEdit(p: Asas & { tarikh?: string; kunci?: string }) {
+export function RphEdit(p: Asas & { tarikh?: string; kunci?: string; fokus?: string }) {
   const tarikh = tarikhValid(p.tarikh) ? p.tarikh : null;
   const mula = p.kunci && /^\d{4}$/.test(p.kunci) ? dariKunci(p.kunci) : null;
   const sediaAda = tarikh && mula ? p.rph.find((r) => r.tarikh === tarikh && r.mula === mula) : undefined;
@@ -295,6 +295,16 @@ export function RphEdit(p: Asas & { tarikh?: string; kunci?: string }) {
       simpan();
     };
   }, []);
+
+  // Dari "Tulis refleksi": terus ke medan refleksi.
+  const adaAsas = Boolean(asas);
+  useEffect(() => {
+    if (p.fokus !== 'refleksi' || !adaAsas) return;
+    const el = document.getElementById('rph-refleksi') as HTMLTextAreaElement | null;
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.focus({ preventScroll: true });
+  }, [p.fokus, adaAsas]);
 
   const sumber = useMemo(
     () =>

@@ -1336,3 +1336,172 @@ a.baris-waktu {
   top: 12px;
   right: 12px;
 }
+
+/* Utama dan Jadual Hari Ini */
+.grid-statistik {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.statistik {
+  background: #fff;
+  border: 1px solid var(--garis);
+  border-top: 3px solid var(--hijau-2);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statistik span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--kelabu);
+}
+
+.statistik strong {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--hijau);
+}
+
+.statistik-emas {
+  border-top-color: #b7892b;
+}
+
+.statistik-emas strong {
+  color: var(--emas-tua);
+}
+
+.statistik-biru {
+  border-top-color: var(--biru);
+}
+
+.statistik-biru strong {
+  color: var(--biru);
+}
+
+.statistik-merah {
+  border-top-color: var(--merah);
+}
+
+.statistik-merah strong {
+  color: var(--merah);
+}
+
+.kad .grid-statistik .statistik {
+  background: var(--latar);
+  border-color: transparent;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+
+.kad-garis-hijau {
+  border-top: 3px solid var(--hijau-2);
+}
+
+.masa-dua {
+  flex: none;
+  width: 48px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--kelabu);
+}
+
+.baris-hari {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  min-height: 52px;
+}
+
+.baris-lapang .nama-waktu {
+  font-weight: 600;
+}
+
+.pudar {
+  color: var(--kelabu);
+}
+
+li.pudar,
+.baris-lepas {
+  opacity: 0.72;
+}
+
+.baris-sekarang {
+  background: #f0f7f4;
+  border-left: 4px solid var(--hijau-2);
+  padding-bottom: 12px;
+}
+
+.baris-sekarang .dua-butang {
+  padding: 0 14px;
+}
+
+.baris-sekarang .masa-dua {
+  color: var(--hijau);
+}
+
+.label-sekarang {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--emas-tua);
+}
+
+.jalur-sekarang {
+  background: var(--emas-lembut);
+  color: var(--emas-tua);
+}
+
+.pil-belum {
+  color: var(--merah);
+  background: var(--merah-lembut);
+}
+
+.fokus-kelas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f0f7f4;
+  border-left: 4px solid var(--hijau-2);
+  text-decoration: none;
+  color: var(--dakwat);
+  min-height: 56px;
+}
+
+.senarai-ringkas li + li {
+  border-top: 1px solid var(--garis-halus);
+}
+
+.senarai-ringkas a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dakwat);
+  text-decoration: none;
+}
+
+.senarai-ringkas a span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.senarai-ringkas .mono {
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--kelabu);
+}
