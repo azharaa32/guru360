@@ -269,19 +269,38 @@ export class Dokumen {
     this.perluRuang(mm * MM);
   }
 
-  /** Dua ruang tandatangan sebelah-menyebelah. */
-  tandatangan(kiri: { tajuk: string; nama: string }, kanan: { tajuk: string; nama: string }) {
-    this.perluRuang(32 * MM);
+  /** Dua ruang tandatangan sebelah-menyebelah, dengan nama dan jawatan di bawah garis. */
+  tandatangan(kiri: { tajuk: string; nama: string; jawatan?: string }, kanan: { tajuk: string; nama: string; jawatan?: string }) {
+    this.perluRuang(36 * MM);
     this.y -= 8 * MM;
     const lebar = this.lebarIsi / 2 - 8 * MM;
     [kiri, kanan].forEach((t, i) => {
       const x = TEPI.kiri + i * (this.lebarIsi / 2 + 8 * MM);
       this.halaman.drawText(this.bersih(t.tajuk), { x, y: this.y, size: 10, font: this.biasa, color: HITAM });
       this.halaman.drawLine({ start: { x, y: this.y - 16 * MM }, end: { x: x + lebar, y: this.y - 16 * MM }, thickness: 0.6, color: HITAM });
-      const nama = this.balut(t.nama ? `(${t.nama})` : '', this.biasa, 9.5, lebar)[0] ?? '';
-      this.halaman.drawText(nama, { x, y: this.y - 16 * MM - 12, size: 9.5, font: this.biasa, color: HITAM });
+      const baris = [...(t.nama ? this.balut(`(${t.nama})`, this.biasa, 9.5, lebar) : []), ...(t.jawatan ? this.balut(t.jawatan, this.biasa, 9.5, lebar) : [])].slice(0, 4);
+      baris.forEach((b, j) => {
+        this.halaman.drawText(b, { x, y: this.y - 16 * MM - 12 - j * 12, size: 9.5, font: this.biasa, color: HITAM });
+      });
     });
-    this.y -= 24 * MM;
+    this.y -= 30 * MM;
+  }
+
+  /** Senarai bernombor atau berhuruf dengan inden gantung: "i.  teks yang dibalut". */
+  senarai(butir: string[], penanda: (i: number) => string) {
+    const saiz = 11;
+    const tinggiBaris = saiz * 1.5;
+    const inden = 10 * MM;
+    butir.forEach((teks, i) => {
+      const baris = this.balut(teks, this.biasa, saiz, this.lebarIsi - inden);
+      baris.forEach((b, j) => {
+        this.perluRuang(tinggiBaris);
+        this.y -= tinggiBaris;
+        if (j === 0) this.halaman.drawText(this.bersih(penanda(i)), { x: TEPI.kiri, y: this.y + tinggiBaris * 0.25, size: saiz, font: this.biasa, color: HITAM });
+        this.halaman.drawText(b, { x: TEPI.kiri + inden, y: this.y + tinggiBaris * 0.25, size: saiz, font: this.biasa, color: HITAM });
+      });
+    });
+    this.y -= 3 * MM;
   }
 
   /** Tambah nombor halaman dan pulangkan fail PDF. */
@@ -367,5 +386,90 @@ export async function pdfRph(
     }
   }
   d.tandatangan({ tajuk: 'Disediakan oleh:', nama: guru.nama }, { tajuk: 'Disemak oleh:', nama: '' });
+  return d.siap();
+}
+
+export interface KertasKerjaPdf {
+  tajuk: string;
+  latar: string;
+  rasional: string;
+  objektif: string[];
+  sasaran: string;
+  tarikh: string; // sudah diformat
+  masa: string;
+  tempat: string;
+  jawatankuasa: { jawatan: string; nama: string }[];
+  aturcara: { masa: string; acara: string }[];
+  belanja: { perkara: string; kuantiti: number; harga: number }[];
+  tiada_kos: boolean;
+  sumber: string;
+  penutup: string;
+  disediakan: { jawatan: string; nama: string };
+  disahkan: { jawatan: string; nama: string };
+}
+
+const ROMAN = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii', 'xiii', 'xiv', 'xv', 'xvi', 'xvii', 'xviii', 'xix', 'xx'];
+const wang = (n: number) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** PDF kertas kerja: sembilan bahagian bernombor, jadual jawatankuasa, aturcara dan anggaran belanja. */
+export async function pdfKertasKerja(k: KepalaSurat, kk: KertasKerjaPdf): Promise<Uint8Array> {
+  const d = await Dokumen.mula(kk.tajuk || 'Kertas kerja');
+  await d.kepalaSurat(k);
+  d.tajuk('KERTAS KERJA');
+  d.tajuk(kk.tajuk || '(TAJUK BELUM DIISI)');
+  let n = 0;
+  const bahagian = (nama: string) => {
+    n += 1;
+    d.pastikanRuang(28);
+    d.subtajuk(`${n}.0  ${nama}`);
+  };
+  const perenggan = (teks: string) => d.perenggan(teks.trim() || '-');
+
+  bahagian('LATAR BELAKANG');
+  perenggan(kk.latar);
+  bahagian('RASIONAL');
+  perenggan(kk.rasional);
+  bahagian('OBJEKTIF');
+  if (kk.objektif.length) d.senarai(kk.objektif, (i) => `${ROMAN[i] ?? i + 1}.`);
+  else perenggan('');
+  bahagian('SASARAN');
+  perenggan(kk.sasaran);
+  bahagian('TARIKH, MASA DAN TEMPAT');
+  d.medan('Tarikh', kk.tarikh);
+  d.medan('Masa', kk.masa);
+  d.medan('Tempat', kk.tempat);
+  d.jarak(3);
+  bahagian('JAWATANKUASA');
+  if (kk.jawatankuasa.length) {
+    d.grid([0.4, 0.6], [{ sel: ['JAWATAN', 'NAMA'], tebal: true }, ...kk.jawatankuasa.map((o) => ({ sel: [o.jawatan, o.nama] }))]);
+    d.jarak(3);
+  } else perenggan('');
+  bahagian('ATURCARA');
+  if (kk.aturcara.length) {
+    d.grid([0.28, 0.72], [{ sel: ['MASA', 'ACARA'], tebal: true }, ...kk.aturcara.map((a) => ({ sel: [a.masa, a.acara] }))]);
+    d.jarak(3);
+  } else perenggan('');
+  bahagian('ANGGARAN PERBELANJAAN');
+  if (kk.tiada_kos || !kk.belanja.length) perenggan(kk.tiada_kos ? 'Program ini tidak melibatkan sebarang kos.' : '');
+  else {
+    const jumlah = kk.belanja.reduce((j, b) => j + b.kuantiti * b.harga, 0);
+    d.grid(
+      [0.08, 0.42, 0.14, 0.18, 0.18],
+      [
+        { sel: ['BIL', 'PERKARA', 'KUANTITI', 'HARGA (RM)', 'JUMLAH (RM)'], tebal: true },
+        ...kk.belanja.map((b, i) => ({ sel: [String(i + 1), b.perkara, String(b.kuantiti), wang(b.harga), wang(b.kuantiti * b.harga)] })),
+        { sel: ['', 'JUMLAH KESELURUHAN', '', '', wang(jumlah)], tebal: true },
+      ],
+    );
+    d.jarak(3);
+    if (kk.sumber.trim()) d.medan('Sumber kewangan', kk.sumber);
+    d.jarak(2);
+  }
+  bahagian('PENUTUP');
+  perenggan(kk.penutup);
+  d.tandatangan(
+    { tajuk: 'Disediakan oleh:', nama: kk.disediakan.nama, jawatan: kk.disediakan.jawatan },
+    { tajuk: 'Disahkan oleh:', nama: kk.disahkan.nama, jawatan: kk.disahkan.jawatan },
+  );
   return d.siap();
 }

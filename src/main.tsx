@@ -6,6 +6,7 @@ import { useProfil, useSesi } from './lib/akaun';
 import { useDalamTalian, useLaluan } from './lib/hooks';
 import { useJadual } from './lib/jadual';
 import { binaKalendar, useCutiSendiri } from './lib/kalendar';
+import { useDokumen } from './lib/dokumen';
 import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
 import { useTemplat } from './lib/templat';
@@ -14,6 +15,7 @@ import { Takwim } from './screens/Takwim';
 import { Cuti } from './screens/Cuti';
 import { HariIni } from './screens/HariIni';
 import { Jadual } from './screens/Jadual';
+import { KertasEdit, KertasSenarai } from './screens/KertasKerja';
 import { KataLaluanBaharu, Masuk, Memuat } from './screens/Masuk';
 import { RphEdit, RphMinggu } from './screens/Rph';
 import { Templat } from './screens/Templat';
@@ -31,6 +33,7 @@ function App() {
   const templat = useTemplat(sesi?.user.id ?? null, dalamTalian);
   const rph = useRph(sesi?.user.id ?? null, dalamTalian);
   const prog = useProgram(sesi?.user.id ?? null, dalamTalian);
+  const dok = useDokumen(sesi?.user.id ?? null, dalamTalian);
   const negeri = profil?.negeri ?? null;
   const kal = useMemo(() => binaKalendar(negeri, cutiSendiri.cuti), [negeri, cutiSendiri.cuti]);
 
@@ -70,6 +73,11 @@ function App() {
           ) : (
             <RphMinggu {...asas} tarikh={param[0] === 'm' ? param[1] : undefined} />
           );
+        })()}
+      {laluan === 'kertas' &&
+        (() => {
+          const asas = { ...dok, program: prog.program, profil, templat: templat.templat, logo: templat.logo };
+          return param[0] && param[0] !== 'p' ? <KertasEdit key={param[0]} {...asas} id={param[0]} /> : <KertasSenarai {...asas} programId={param[0] === 'p' ? param[1] : undefined} />;
         })()}
       {laluan === 'takwim' && (
         <Takwim

@@ -11,7 +11,7 @@ import { hariSekolahSeterusnya, susunHari, useMasaKini } from './HariIni';
 const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 'merah'; ke?: string }[] = [
   { nama: 'RPH', ikon: 'rph', warna: 'hijau', ke: '#/rph' },
   { nama: 'Jadual', ikon: 'jadual', warna: 'hijau', ke: '#/jadual' },
-  { nama: 'Kertas Kerja', ikon: 'kertas', warna: 'biru' },
+  { nama: 'Kertas Kerja', ikon: 'kertas', warna: 'biru', ke: '#/kertas' },
   { nama: 'Minit', ikon: 'minit', warna: 'biru' },
   { nama: 'Memo', ikon: 'memo', warna: 'emas' },
   { nama: 'Surat', ikon: 'surat', warna: 'emas' },

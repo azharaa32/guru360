@@ -1593,3 +1593,252 @@ li.pudar,
 .satu-butang {
   display: grid;
 }
+
+/* Kertas kerja */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.kemajuan {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kemajuan-teks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--kelabu);
+}
+
+.kemajuan-teks .mono {
+  color: var(--hijau);
+}
+
+.kemajuan-jalur {
+  height: 8px;
+  border-radius: 99px;
+  background: #e6ece9;
+  overflow: hidden;
+}
+
+.kemajuan-jalur div {
+  height: 8px;
+  background: var(--biru);
+}
+
+.akordion {
+  padding: 0;
+  gap: 0;
+}
+
+.akordion-buka {
+  border: 2px solid var(--biru);
+}
+
+.akordion h2 {
+  font: inherit;
+}
+
+.akordion-kepala {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: none;
+  font: 600 14px var(--fon);
+  color: var(--dakwat);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 12px;
+}
+
+.akordion-nama {
+  flex: 1;
+  min-width: 0;
+}
+
+.bulat {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid #9aa8a2;
+  color: var(--kelabu);
+  font: 500 12px var(--fon-mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bulat-aktif {
+  background: var(--biru);
+  border-color: var(--biru);
+  color: #fff;
+}
+
+.bulat-siap {
+  background: var(--hijau-2);
+  border-color: var(--hijau-2);
+  color: #fff;
+}
+
+.akordion-isi {
+  padding: 4px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jumlah-kecil {
+  flex: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--kelabu);
+}
+
+.baris-senarai,
+.baris-dua {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.baris-dua {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) 44px;
+}
+
+.baris-aturcara {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 44px;
+}
+
+.baris-senarai input,
+.baris-dua input,
+.tiga-lajur input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #b9c5bf;
+  border-radius: 10px;
+  padding: 0 10px;
+  font: 500 16px var(--fon);
+  color: var(--dakwat);
+  background: #fff;
+}
+
+.baris-senarai input.besar,
+.baris-dua input.besar {
+  text-transform: uppercase;
+}
+
+.baris-senarai input::placeholder,
+.baris-dua input::placeholder {
+  text-transform: none;
+  color: #6f7c77;
+}
+
+.tiga-lajur input.mono {
+  font-family: var(--fon-mono);
+}
+
+.penanda {
+  flex: none;
+  width: 22px;
+  font-size: 13px;
+  color: var(--kelabu);
+}
+
+.butang-buang {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--merah);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.butang-buang:active {
+  background: var(--merah-lembut);
+}
+
+.butang-putus-biru {
+  border: 1.5px dashed var(--biru);
+  background: #f1f5fb;
+  color: var(--biru);
+}
+
+.baris-belanja {
+  border: 1px solid var(--garis);
+  border-radius: 10px;
+  padding: 10px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tiga-lajur {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.4fr);
+  gap: 8px;
+  align-items: end;
+}
+
+.tiga-lajur label,
+.jumlah-baris {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--kelabu);
+  min-width: 0;
+}
+
+.jumlah-baris strong {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dakwat);
+}
+
+.jumlah-besar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--biru-lembut);
+  color: var(--biru);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.jumlah-besar strong {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+a.acara-butang {
+  text-decoration: none;
+  color: var(--dakwat);
+}
