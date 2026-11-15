@@ -1,6 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Kepala } from '../components/Rangka';
-import { ciptaSekolah, NAMA_STATUS, namaPeranan, putusSekolah, senaraiMenunggu, type Keahlian, type Permohonan, type Sekolah } from '../lib/sekolah';
+import {
+  ciptaSekolah,
+  hantarSemulaJemputan,
+  jemputGuru,
+  keluarkanGuru,
+  NAMA_STATUS,
+  namaPeranan,
+  putusSekolah,
+  senaraiAhli,
+  senaraiMenunggu,
+  type ButiranAhli,
+  type Keahlian,
+  type Permohonan,
+  type Sekolah,
+} from '../lib/sekolah';
 import { supabase } from '../lib/supabase';
 import { BorangSekolah } from './DaftarSekolah';
 
@@ -134,6 +148,144 @@ function CiptaSekolah({ muatSemula }: { muatSemula: () => void }) {
   );
 }
 
+/** Admin sekolah: jemput guru melalui emel, lihat senarai guru, hantar semula jemputan dan keluarkan guru. */
+function GuruSekolah({ dalamTalian, muatSemula }: { dalamTalian: boolean; muatSemula: () => void }) {
+  const [senarai, setSenarai] = useState<ButiranAhli[] | null>(null);
+  const [emel, setEmel] = useState('');
+  const [sibuk, setSibuk] = useState<string | null>(null);
+  const [mesej, setMesej] = useState<{ jenis: 'ok' | 'ralat'; teks: string } | null>(null);
+  const [sahkan, setSahkan] = useState<string | null>(null);
+
+  const muat = useCallback(async () => {
+    const h = await senaraiAhli();
+    if (h.ok) setSenarai(h.senarai);
+    else setMesej({ jenis: 'ralat', teks: h.ralat });
+  }, []);
+
+  useEffect(() => {
+    if (dalamTalian) void muat();
+  }, [dalamTalian, muat]);
+
+  const jemput = async (e: FormEvent) => {
+    e.preventDefault();
+    if (sibuk) return;
+    const alamat = emel.trim();
+    setSibuk('jemput');
+    setMesej(null);
+    const h = await jemputGuru(alamat);
+    setSibuk(null);
+    if (h.ok) {
+      setEmel('');
+      setMesej({
+        jenis: 'ok',
+        teks: h.emel_dihantar ? `Emel jemputan dihantar ke ${alamat}.` : `${alamat} sudah ada akaun Guru360 dan kini ahli sekolah anda. Guru itu boleh terus log masuk.`,
+      });
+      await muat();
+      muatSemula();
+    } else setMesej({ jenis: 'ralat', teks: h.ralat });
+  };
+
+  const tindak = async (aksi: 'semula' | 'keluar', a: ButiranAhli) => {
+    setSibuk(a.id);
+    setSahkan(null);
+    setMesej(null);
+    const h = aksi === 'semula' ? await hantarSemulaJemputan(a.id) : await keluarkanGuru(a.id);
+    setSibuk(null);
+    if (!h.ok) setMesej({ jenis: 'ralat', teks: h.ralat });
+    else setMesej({ jenis: 'ok', teks: aksi === 'semula' ? `Emel jemputan dihantar semula ke ${a.emel}.` : `${a.nama || a.emel} dikeluarkan. Rekodnya kekal dengan sekolah.` });
+    await muat();
+    if (aksi === 'keluar') muatSemula();
+  };
+
+  const guru = (senarai ?? []).filter((a) => a.peranan === 'guru');
+  const aktif = guru.filter((a) => a.status === 'aktif' && a.diterima).length;
+  const dijemput = guru.filter((a) => a.status === 'aktif' && !a.diterima).length;
+
+  return (
+    <>
+      <section className="bahagian" aria-labelledby="tajuk-jemput">
+        <h2 id="tajuk-jemput" className="label-bahagian">
+          JEMPUT GURU
+        </h2>
+        <form className="kad borang borang-sekolah" onSubmit={jemput}>
+          <div className="medan">
+            <label htmlFor="jemput-emel">Emel guru</label>
+            <input id="jemput-emel" type="email" inputMode="email" autoComplete="off" autoCapitalize="none" spellCheck={false} maxLength={254} required value={emel} onChange={(e) => setEmel(e.target.value)} />
+          </div>
+          <div aria-live="polite">
+            {mesej && (
+              <p className={`mesej mesej-${mesej.jenis}`} role={mesej.jenis === 'ralat' ? 'alert' : 'status'}>
+                {mesej.teks}
+              </p>
+            )}
+          </div>
+          <button type="submit" className="butang butang-utama" disabled={sibuk === 'jemput' || !dalamTalian}>
+            {sibuk === 'jemput' ? 'Sebentar…' : 'Jemput'}
+          </button>
+          {!dalamTalian && <p className="nota">Sambung internet untuk menjemput guru.</p>}
+        </form>
+      </section>
+
+      <section className="bahagian" aria-labelledby="tajuk-guru">
+        <div className="baris-tajuk">
+          <h2 id="tajuk-guru" className="label-bahagian">
+            GURU
+          </h2>
+          <span className="mono nota-kecil">{senarai ? `${aktif} aktif · ${dijemput} dijemput` : '-'}</span>
+        </div>
+        {!senarai && <p className="nota">{dalamTalian ? 'Memuat senarai guru…' : 'Sambung internet untuk melihat senarai guru.'}</p>}
+        {senarai && guru.length === 0 && <p className="nota">Belum ada guru. Jemput guru pertama dengan emel mereka di atas.</p>}
+        {guru.length > 0 && (
+          <ul className="senarai-acara">
+            {guru.map((a) => {
+              const keluar = a.status === 'keluar';
+              const menunggu = !keluar && !a.diterima;
+              return (
+                <li key={a.id} className={`kad${a.minta_keluar_pada && !keluar ? ' kad-garis-emas' : ''}`}>
+                  <div className="baris-ahli">
+                    <span className="acara-teks">
+                      <strong className={a.nama ? undefined : 'pecah'}>{a.nama || a.emel}</strong>
+                      <span className="pecah">
+                        {keluar
+                          ? `Keluar ${a.keluar_pada ? tarikhPendek(a.keluar_pada) : ''} · rekod kekal`
+                          : menunggu
+                            ? `Dijemput ${tarikhPendek(a.masuk_pada)} · belum tetapkan kata laluan`
+                            : a.nama
+                              ? a.emel
+                              : 'Nama belum diisi'}
+                      </span>
+                    </span>
+                    <span className={`pil ${keluar ? 'pil-belum' : menunggu ? 'pil-draf' : 'pil-siap'}`}>● {keluar ? 'Keluar' : menunggu ? 'Dijemput' : 'Aktif'}</span>
+                  </div>
+                  {a.minta_keluar_pada && !keluar && <p className="mesej mesej-tunggu">Guru ini meminta dikeluarkan pada {tarikhPendek(a.minta_keluar_pada)}.</p>}
+                  {!keluar && (
+                    <div className="dua-butang">
+                      {sahkan === a.id ? (
+                        <button type="button" className="butang butang-bahaya butang-kecil" disabled={sibuk === a.id} onClick={() => void tindak('keluar', a)}>
+                          Sahkan keluarkan
+                        </button>
+                      ) : (
+                        <button type="button" className="butang butang-garis butang-kecil" disabled={sibuk === a.id} onClick={() => setSahkan(a.id)}>
+                          Keluarkan
+                        </button>
+                      )}
+                      {menunggu && (
+                        <button type="button" className="butang butang-garis butang-kecil" disabled={sibuk === a.id} onClick={() => void tindak('semula', a)}>
+                          Hantar semula
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
 /** Skrin utama akaun pengurusan (admin sekolah dan ibu pejabat). Akaun ini tidak mengajar. */
 export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula }: { keahlian: Keahlian; nama: string; dalamTalian: boolean; muatSemula: () => void }) {
   const guruAktif = (sekolahId: string) => keahlian.ahli.filter((a) => a.sekolah_id === sekolahId && a.status === 'aktif' && a.peranan === 'guru').length;
@@ -167,9 +319,11 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula }: { keahli
             </dl>
             {s.status === 'menunggu' && <p className="mesej mesej-tunggu">Sekolah anda menunggu kelulusan ibu pejabat. Anda boleh menjemput guru sebaik sahaja diluluskan.</p>}
             {s.status === 'ditolak' && <p className="mesej mesej-ralat">Permohonan sekolah anda ditolak. Hubungi ibu pejabat untuk maklumat lanjut.</p>}
-            {s.status === 'aktif' && <p className="nota">Jemputan guru, makluman dan semakan RPH akan muncul di sini.</p>}
+            {s.status === 'aktif' && <p className="nota">Makluman dan semakan RPH akan muncul di sini.</p>}
           </section>
         )}
+
+        {keahlian.peranan === 'admin' && s?.status === 'aktif' && <GuruSekolah dalamTalian={dalamTalian} muatSemula={muatSemula} />}
 
         {keahlian.ibuPejabat && <SenaraiMenunggu dalamTalian={dalamTalian} muatSemula={muatSemula} />}
 

@@ -15,6 +15,7 @@ export interface AhliSekolah {
   pengguna_id: string;
   peranan: 'admin' | 'guru';
   status: 'aktif' | 'keluar';
+  minta_keluar_pada?: string | null;
 }
 
 export interface Keahlian {
@@ -25,11 +26,13 @@ export interface Keahlian {
   /** Untuk admin: ahli sekolahnya. Untuk ibu pejabat: semua sekolah dan ahlinya. */
   semuaSekolah: Sekolah[];
   ahli: AhliSekolah[];
+  /** Guru ini sudah meminta admin mengeluarkannya dari sekolah. */
+  mintaKeluar?: boolean;
 }
 
 const KOSONG: Keahlian = { peranan: null, sekolah: null, ibuPejabat: false, semuaSekolah: [], ahli: [] };
 const LAJUR_SEKOLAH = 'id, nama, kod, negeri, status';
-const LAJUR_AHLI = 'sekolah_id, pengguna_id, peranan, status';
+const LAJUR_AHLI = 'sekolah_id, pengguna_id, peranan, status, minta_keluar_pada';
 
 async function muat(uid: string): Promise<Keahlian> {
   const [saya, hq] = await Promise.all([
@@ -52,7 +55,7 @@ async function muat(uid: string): Promise<Keahlian> {
     if (semua.error) throw new Error(semua.error.message);
     ahli = (semua.data ?? []) as unknown as AhliSekolah[];
   }
-  return { peranan: aktif?.peranan ?? null, sekolah: semuaSekolah.find((s) => s.id === aktif?.sekolah_id) ?? null, ibuPejabat, semuaSekolah, ahli };
+  return { peranan: aktif?.peranan ?? null, sekolah: semuaSekolah.find((s) => s.id === aktif?.sekolah_id) ?? null, ibuPejabat, semuaSekolah, ahli, mintaKeluar: !!aktif?.minta_keluar_pada };
 }
 
 /** Sekolah dan peranan pengguna. Salinan terakhir disimpan dalam telefon supaya aplikasi dibuka tanpa internet. */
@@ -153,3 +156,23 @@ export const daftarSekolah = (d: DataSekolahBaru) => panggil('daftar-sekolah', d
 export const senaraiMenunggu = () => panggil<{ senarai: Permohonan[] }>('urus-sekolah', { aksi: 'menunggu' });
 export const putusSekolah = (aksi: 'lulus' | 'tolak', sekolahId: string) => panggil('urus-sekolah', { aksi, sekolah_id: sekolahId });
 export const ciptaSekolah = (d: DataSekolahBaru) => panggil('urus-sekolah', { aksi: 'cipta', ...d });
+
+export interface ButiranAhli {
+  id: string;
+  pengguna_id: string;
+  peranan: 'admin' | 'guru';
+  status: 'aktif' | 'keluar';
+  masuk_pada: string;
+  keluar_pada: string | null;
+  minta_keluar_pada: string | null;
+  nama: string;
+  emel: string;
+  /** Guru sudah membuka pautan jemputan dan menetapkan kata laluan. */
+  diterima: boolean;
+}
+
+export const senaraiAhli = () => panggil<{ senarai: ButiranAhli[] }>('urus-ahli', { aksi: 'senarai' });
+export const jemputGuru = (emel: string) => panggil<{ emel_dihantar: boolean }>('urus-ahli', { aksi: 'jemput', emel });
+export const hantarSemulaJemputan = (ahliId: string) => panggil('urus-ahli', { aksi: 'hantar_semula', ahli_id: ahliId });
+export const keluarkanGuru = (ahliId: string) => panggil('urus-ahli', { aksi: 'keluarkan', ahli_id: ahliId });
+export const mintaKeluar = (minta: boolean) => panggil('urus-ahli', { aksi: minta ? 'minta_keluar' : 'batal_minta' });

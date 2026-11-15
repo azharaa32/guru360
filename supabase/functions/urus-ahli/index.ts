@@ -1,0 +1,144 @@
+// Keahlian sekolah: admin menjemput dan mengeluarkan guru; guru meminta dikeluarkan.
+// Semua penulisan jadual ahli berlaku di sini dengan kunci perkhidmatan, selepas pemanggil disemak.
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
+const APL = 'https://azharaa32.github.io/guru360/';
+const HAD_AHLI = 300;
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+const balas = (badan: unknown, status = 200) => new Response(JSON.stringify(badan), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+const ralat = (teks: string) => balas({ ok: false, ralat: teks });
+const sibuk = () => balas({ ok: false, ralat: 'Pelayan sibuk. Cuba lagi sebentar.' }, 500);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+  if (req.method !== 'POST') return balas({ ok: false, ralat: 'Kaedah tidak dibenarkan.' }, 405);
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+  const pengguna = token ? await admin.auth.getUser(token) : null;
+  const uid = pengguna?.data.user?.id;
+  if (!uid) return balas({ ok: false, ralat: 'Sila log masuk semula.' }, 401);
+
+  let badan: Record<string, unknown>;
+  try {
+    badan = await req.json();
+  } catch {
+    return ralat('Permintaan tidak sah.');
+  }
+  const aksi = badan.aksi;
+
+  // Keahlian aktif pemanggil dan sekolahnya.
+  const saya = await admin.from('ahli').select('id, sekolah_id, peranan, sekolah(id, nama, negeri, status)').eq('pengguna_id', uid).eq('status', 'aktif').maybeSingle();
+  if (saya.error) return sibuk();
+  const ahliSaya = saya.data as { id: string; sekolah_id: string; peranan: string; sekolah: { id: string; nama: string; negeri: string | null; status: string } } | null;
+  if (!ahliSaya) return balas({ ok: false, ralat: 'Akaun ini tiada sekolah.' }, 403);
+
+  // --- Guru: minta dikeluarkan atau batalkan permintaan ---
+  if (aksi === 'minta_keluar' || aksi === 'batal_minta') {
+    if (ahliSaya.peranan !== 'guru') return ralat('Hanya guru boleh meminta dikeluarkan. Admin sekolah perlu menghubungi ibu pejabat.');
+    const r = await admin.from('ahli').update({ minta_keluar_pada: aksi === 'minta_keluar' ? new Date().toISOString() : null }).eq('id', ahliSaya.id).eq('status', 'aktif');
+    if (r.error) return sibuk();
+    return balas({ ok: true });
+  }
+
+  // --- Selepas ini: admin sekolah sahaja ---
+  if (ahliSaya.peranan !== 'admin') return balas({ ok: false, ralat: 'Hanya admin sekolah boleh melakukan ini.' }, 403);
+  const sekolah = ahliSaya.sekolah;
+
+  if (aksi === 'senarai') {
+    const s = await admin.rpc('ahli_sekolah_butiran', { p_sekolah: sekolah.id });
+    if (s.error) return sibuk();
+    return balas({ ok: true, senarai: s.data ?? [] });
+  }
+
+  if (sekolah.status !== 'aktif') return ralat('Sekolah anda belum diluluskan oleh ibu pejabat.');
+
+  if (aksi === 'jemput') {
+    const emel = typeof badan.emel === 'string' ? badan.emel.trim().toLowerCase() : '';
+    if (emel.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emel)) return ralat('Alamat emel tidak sah.');
+    const bil = await admin.from('ahli').select('id', { count: 'exact', head: true }).eq('sekolah_id', sekolah.id).eq('status', 'aktif');
+    if (bil.error) return sibuk();
+    if ((bil.count ?? 0) >= HAD_AHLI) return ralat('Had bilangan ahli sekolah telah dicapai. Hubungi ibu pejabat.');
+
+    const cari = await admin.rpc('cari_pengguna_emel', { p_emel: emel });
+    if (cari.error) return sibuk();
+    const sedia = ((cari.data ?? []) as { id: string; disahkan: boolean }[])[0] ?? null;
+
+    if (sedia) {
+      const hq = await admin.from('ibu_pejabat').select('pengguna_id').eq('pengguna_id', sedia.id).maybeSingle();
+      if (hq.error) return sibuk();
+      if (hq.data) return ralat('Emel ini akaun ibu pejabat dan tidak boleh dijemput sebagai guru.');
+      const lain = await admin.from('ahli').select('sekolah_id').eq('pengguna_id', sedia.id).eq('status', 'aktif').maybeSingle();
+      if (lain.error) return sibuk();
+      if (lain.data) {
+        return ralat(
+          (lain.data as { sekolah_id: string }).sekolah_id === sekolah.id
+            ? 'Emel ini sudah menjadi ahli sekolah anda.'
+            : 'Emel ini masih ahli sekolah lain. Guru itu perlu dikeluarkan dari sekolah lamanya dahulu.',
+        );
+      }
+    }
+
+    let uidGuru = sedia?.id ?? null;
+    let emelDihantar = false;
+    if (!sedia || !sedia.disahkan) {
+      // Akaun baharu, atau akaun yang belum pernah menerima jemputan: hantar (semula) emel jemputan.
+      const j = await admin.auth.admin.inviteUserByEmail(emel, { redirectTo: APL });
+      if (j.error || !j.data.user) {
+        const m = j.error?.message ?? '';
+        if (/rate|limit|security/i.test(m)) return ralat('Terlalu banyak emel dihantar. Tunggu sebentar, kemudian cuba lagi.');
+        if (/invalid|valid/i.test(m)) return ralat('Alamat emel tidak sah.');
+        return balas({ ok: false, ralat: 'Emel jemputan tidak dapat dihantar. Cuba lagi nanti.' }, 500);
+      }
+      uidGuru = j.data.user.id;
+      emelDihantar = true;
+    }
+
+    const masuk = await admin.from('ahli').insert({ sekolah_id: sekolah.id, pengguna_id: uidGuru, peranan: 'guru', status: 'aktif' });
+    if (masuk.error) {
+      if (!sedia && uidGuru) await admin.auth.admin.deleteUser(uidGuru);
+      if (masuk.error.code === '23505') return ralat('Emel ini sudah menjadi ahli sebuah sekolah.');
+      return sibuk();
+    }
+    // Profil: tetapkan sekolah baharu; nama sedia ada dikekalkan.
+    const ada = await admin.from('profil').select('id').eq('id', uidGuru).maybeSingle();
+    const sek = { sekolah: sekolah.nama.slice(0, 160), negeri: sekolah.negeri };
+    if (ada.data) await admin.from('profil').update(sek).eq('id', uidGuru);
+    else await admin.from('profil').insert({ id: uidGuru, ...sek });
+    return balas({ ok: true, emel_dihantar: emelDihantar });
+  }
+
+  if (aksi === 'hantar_semula' || aksi === 'keluarkan') {
+    const id = typeof badan.ahli_id === 'string' ? badan.ahli_id : '';
+    if (!UUID.test(id)) return ralat('Ahli tidak sah.');
+    const t = await admin.from('ahli').select('id, pengguna_id, peranan, status').eq('id', id).eq('sekolah_id', sekolah.id).maybeSingle();
+    if (t.error) return sibuk();
+    const sasaran = t.data as { id: string; pengguna_id: string; peranan: string; status: string } | null;
+    if (!sasaran || sasaran.status !== 'aktif' || sasaran.peranan !== 'guru') return ralat('Guru ini tidak lagi aktif di sekolah anda. Muat semula senarai.');
+
+    if (aksi === 'keluarkan') {
+      const r = await admin.from('ahli').update({ status: 'keluar', keluar_pada: new Date().toISOString(), minta_keluar_pada: null }).eq('id', id).eq('status', 'aktif');
+      if (r.error) return sibuk();
+      return balas({ ok: true });
+    }
+
+    const u = await admin.auth.admin.getUserById(sasaran.pengguna_id);
+    const pengguna = u.data.user;
+    if (u.error || !pengguna?.email) return sibuk();
+    if (pengguna.email_confirmed_at) return ralat('Guru ini sudah menerima jemputan dan boleh log masuk.');
+    const j = await admin.auth.admin.inviteUserByEmail(pengguna.email, { redirectTo: APL });
+    if (j.error) {
+      if (/rate|limit|security/i.test(j.error.message)) return ralat('Terlalu banyak emel dihantar. Tunggu sebentar, kemudian cuba lagi.');
+      return balas({ ok: false, ralat: 'Emel jemputan tidak dapat dihantar. Cuba lagi nanti.' }, 500);
+    }
+    return balas({ ok: true });
+  }
+
+  return ralat('Tindakan tidak dikenali.');
+});

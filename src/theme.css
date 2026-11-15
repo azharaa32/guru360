@@ -2271,3 +2271,26 @@ a.acara-butang {
 .senarai dd.kanan {
   text-align: right;
 }
+
+/* Fasa sekolah, tugas 3 */
+.minta-keluar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.pecah {
+  overflow-wrap: anywhere;
+}
+
+.baris-ahli {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.baris-ahli .pil {
+  flex: none;
+}

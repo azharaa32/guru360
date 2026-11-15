@@ -4,7 +4,7 @@ import { NEGERI, PROFIL_KOSONG, type HasilSimpan, type Profil as DataProfil } fr
 import { APP_VERSION } from '../lib/config';
 import { sudahDipasang, usePelayan, type StatusPelayan } from '../lib/hooks';
 import { muatTurunData } from '../lib/dataSaya';
-import { NAMA_STATUS, namaPeranan, type Keahlian } from '../lib/sekolah';
+import { mintaKeluar, NAMA_STATUS, namaPeranan, type Keahlian } from '../lib/sekolah';
 import { supabase } from '../lib/supabase';
 
 const teksPelayan: Record<StatusPelayan, string> = {
@@ -18,6 +18,7 @@ const kemas = (s: string) => s.trim().replace(/\s+/g, ' ').toUpperCase();
 
 interface PropsProfil {
   uid: string;
+  muatSemula: () => void;
   keahlian: Keahlian;
   dalamTalian: boolean;
   emel: string;
@@ -27,7 +28,59 @@ interface PropsProfil {
   simpan: (p: DataProfil) => Promise<HasilSimpan>;
 }
 
-export function Profil({ uid, keahlian, dalamTalian, emel, profil, sedia, belumHantar, simpan }: PropsProfil) {
+/** Guru meminta admin mengeluarkannya dari sekolah. Admin yang memutuskan; rekod guru kekal dengan sekolah. */
+function MintaKeluar({ sudahMinta, dalamTalian, muatSemula }: { sudahMinta: boolean; dalamTalian: boolean; muatSemula: () => void }) {
+  const [sahkan, setSahkan] = useState(false);
+  const [sibuk, setSibuk] = useState(false);
+  const [ralat, setRalat] = useState<string | null>(null);
+  const hantar = async (minta: boolean) => {
+    setSibuk(true);
+    setRalat(null);
+    const h = await mintaKeluar(minta);
+    setSibuk(false);
+    setSahkan(false);
+    if (h.ok) muatSemula();
+    else setRalat(h.ralat);
+  };
+  return (
+    <div className="minta-keluar">
+      {sudahMinta ? (
+        <>
+          <p className="mesej mesej-tunggu" role="status">
+            Permintaan dihantar. Admin sekolah akan mengeluarkan anda. Sehingga itu anda masih boleh guna aplikasi seperti biasa.
+          </p>
+          <button type="button" className="butang butang-garis" disabled={sibuk || !dalamTalian} onClick={() => void hantar(false)}>
+            {sibuk ? 'Sebentar…' : 'Batalkan permintaan'}
+          </button>
+        </>
+      ) : sahkan ? (
+        <>
+          <p className="nota">Selepas admin mengeluarkan anda, anda tidak lagi boleh membuka RPH dan dokumen di sekolah ini. Rekod itu kekal dengan sekolah. Muat turun salinan dahulu jika perlu.</p>
+          <div className="dua-butang">
+            <button type="button" className="butang butang-garis butang-kecil" disabled={sibuk} onClick={() => setSahkan(false)}>
+              Batal
+            </button>
+            <button type="button" className="butang butang-bahaya butang-kecil" disabled={sibuk} onClick={() => void hantar(true)}>
+              {sibuk ? 'Sebentar…' : 'Hantar permintaan'}
+            </button>
+          </div>
+        </>
+      ) : (
+        <button type="button" className="butang butang-garis" disabled={!dalamTalian} onClick={() => setSahkan(true)}>
+          Minta dikeluarkan dari sekolah
+        </button>
+      )}
+      {!dalamTalian && !sudahMinta && <p className="nota">Sambung internet untuk menghantar permintaan.</p>}
+      {ralat && (
+        <p className="mesej mesej-ralat" role="alert">
+          {ralat}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function Profil({ uid, keahlian, muatSemula, dalamTalian, emel, profil, sedia, belumHantar, simpan }: PropsProfil) {
   const { status, semak } = usePelayan(dalamTalian);
   const [borang, setBorang] = useState<DataProfil>(profil ?? PROFIL_KOSONG);
   const [disentuh, setDisentuh] = useState(false);
@@ -185,6 +238,7 @@ export function Profil({ uid, keahlian, dalamTalian, emel, profil, sedia, belumH
               </>
             )}
           </dl>
+          {keahlian.peranan === 'guru' && <MintaKeluar sudahMinta={!!keahlian.mintaKeluar} dalamTalian={dalamTalian} muatSemula={muatSemula} />}
         </section>
 
         {keahlian.peranan === 'guru' && (

@@ -91,6 +91,7 @@ function App() {
         {jalur}
         {laluan === 'profil' ? (
             <Profil
+              muatSemula={cubaLagi}
               uid={sesi.user.id}
               keahlian={keahlian}
               dalamTalian={dalamTalian}
@@ -161,6 +162,7 @@ function App() {
       {laluan === 'cuti' && <Cuti negeri={profil?.negeri ?? null} {...cutiSendiri} />}
       {laluan === 'profil' && (
         <Profil
+          muatSemula={cubaLagi}
           uid={sesi.user.id}
           keahlian={keahlian}
           dalamTalian={dalamTalian}
