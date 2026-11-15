@@ -319,7 +319,6 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula }: { keahli
             </dl>
             {s.status === 'menunggu' && <p className="mesej mesej-tunggu">Sekolah anda menunggu kelulusan ibu pejabat. Anda boleh menjemput guru sebaik sahaja diluluskan.</p>}
             {s.status === 'ditolak' && <p className="mesej mesej-ralat">Permohonan sekolah anda ditolak. Hubungi ibu pejabat untuk maklumat lanjut.</p>}
-            {s.status === 'aktif' && <p className="nota">Makluman dan semakan RPH akan muncul di sini.</p>}
           </section>
         )}
 
@@ -328,6 +327,18 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula }: { keahli
             <span className="kad-pautan-teks">
               <strong>Makluman & tindakan</strong>
               <span>Hantar kepada guru sekolah ini; lihat siapa sudah baca dan siap</span>
+            </span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
+
+        {keahlian.peranan === 'admin' && s?.status === 'aktif' && (
+          <a href="#/semak" className="kad kad-pautan">
+            <span className="kad-pautan-teks">
+              <strong>Semak RPH</strong>
+              <span>Baca RPH guru, beri ulasan dan tanda disemak</span>
             </span>
             <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 6l6 6-6 6" />

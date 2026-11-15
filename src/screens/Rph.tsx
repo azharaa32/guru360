@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { HasilPdf, usePdf } from '../components/Pdf';
 import { KepalaKembali } from '../components/Rangka';
+import type { Semakan } from '../lib/semakan';
 import type { Profil } from '../lib/akaun';
 import { HARI_PENDEK, NAMA_HARI, julat, label, type Waktu } from '../lib/jadual';
 import { dariTarikh, hariIni, tambahHari, tarikhMesra, tarikhPenuh, type Kalendar } from '../lib/kalendar';
@@ -20,6 +21,8 @@ interface Asas {
   simpanRph: (r: Rph[]) => void;
   templat: Templat | null;
   logo: Logo;
+  /** Tanda "Disemak" dan ulasan admin sekolah, mengikut id RPH. */
+  semakan?: Record<string, Semakan>;
 }
 
 const TEKS_KEADAAN: Record<Keadaan, string> = { kosong: '○ Kosong', draf: '● Draf', siap: '● Siap' };
@@ -200,7 +203,7 @@ export function RphMinggu(p: Asas & { tarikh?: string }) {
                         <span className="mono masa">{julat(butir)}</span>
                         <span className="nama-waktu">
                           {label(butir)}
-                          <span className="butir-kecil">{k === 'kosong' ? 'Belum diisi' : r?.objektif.trim() ? 'Objektif diisi' : 'Sebahagian diisi'}</span>
+                          <span className="butir-kecil">{k === 'kosong' ? 'Belum diisi' : r && p.semakan?.[r.id] ? '✓ Disemak oleh admin' : r?.objektif.trim() ? 'Objektif diisi' : 'Sebahagian diisi'}</span>
                         </span>
                         <span className={`pil pil-${k}`}>{TEKS_KEADAAN[k]}</span>
                       </a>
@@ -392,6 +395,16 @@ export function RphEdit(p: Asas & { tarikh?: string; kunci?: string; fokus?: str
         </span>
       </header>
       <main className="isi">
+        {p.semakan?.[asas.id] && (
+          <section className="kad kad-garis-hijau" aria-label="Semakan admin sekolah">
+            <div className="baris-ahli">
+              <span className="label-bahagian">SEMAKAN ADMIN</span>
+              <span className="pil pil-siap">✓ Disemak</span>
+            </div>
+            {p.semakan[asas.id].ulasan ? <p className="teks-makluman">{p.semakan[asas.id].ulasan}</p> : <p className="nota">Tiada ulasan.</p>}
+            <p className="nota">Jika anda mengubah isi RPH ini, tanda semakan akan gugur dan admin perlu menyemak semula.</p>
+          </section>
+        )}
         <section className="kad kad-auto" aria-label="Diisi dari jadual waktu">
           <span className="label-bahagian">DIISI DARI JADUAL WAKTU</span>
           <dl className="grid-auto">

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config';
 
-export type Laluan = 'utama' | 'takwim' | 'profil' | 'templat' | 'jadual' | 'cuti' | 'rph' | 'hariini' | 'kertas' | 'surat' | 'minit' | 'opr' | 'jobskop' | 'panduan' | 'makluman';
-const SEMUA: Laluan[] = ['utama', 'takwim', 'profil', 'templat', 'jadual', 'cuti', 'rph', 'hariini', 'kertas', 'surat', 'minit', 'opr', 'jobskop', 'panduan', 'makluman'];
+export type Laluan = 'utama' | 'takwim' | 'profil' | 'templat' | 'jadual' | 'cuti' | 'rph' | 'hariini' | 'kertas' | 'surat' | 'minit' | 'opr' | 'jobskop' | 'panduan' | 'makluman' | 'semak';
+const SEMUA: Laluan[] = ['utama', 'takwim', 'profil', 'templat', 'jadual', 'cuti', 'rph', 'hariini', 'kertas', 'surat', 'minit', 'opr', 'jobskop', 'panduan', 'makluman', 'semak'];
 
 export interface Lokasi {
   nama: Laluan;

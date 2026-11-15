@@ -11,12 +11,14 @@ import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
 import { useMakluman } from './lib/makluman';
 import { useKeahlian } from './lib/sekolah';
+import { useSemakanSaya } from './lib/semakan';
 import { pautanEmel } from './lib/supabase';
 import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
 import { Pengurusan, TiadaSekolah } from './screens/Sekolah';
 import { MaklumanGuru, MaklumanUrus } from './screens/Makluman';
 import { Panduan } from './screens/Panduan';
+import { SemakRph } from './screens/SemakRph';
 import { Takwim } from './screens/Takwim';
 import { Cuti } from './screens/Cuti';
 import { JobskopEdit, JobskopPilih, JobskopUtama } from './screens/Jobskop';
@@ -56,6 +58,7 @@ function App() {
   const negeri = profil?.negeri ?? null;
   // Cuti yang ditetapkan sekolah dan ibu pejabat digabung dengan cuti sendiri guru untuk kalendar dan RPH.
   const bersama = useCutiBersama(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
+  const semakanSaya = useSemakanSaya(uidGuru, dalamTalian);
   const mak = useMakluman(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
   const guruAktif = (sekolahId?: string) => keahlian.ahli.filter((a) => a.peranan === 'guru' && a.status === 'aktif' && (!sekolahId || a.sekolah_id === sekolahId)).length;
   const semuaCuti = useMemo(() => [...cutiSendiri.cuti, ...bersama.cuti], [cutiSendiri.cuti, bersama.cuti]);
@@ -126,6 +129,8 @@ function App() {
               belumHantar={belumHantar}
               simpan={simpan}
             />
+        ) : laluan === 'semak' && adminAktif && keahlian.sekolah ? (
+          <SemakRph sekolahId={keahlian.sekolah.id} negeri={keahlian.sekolah.negeri} dalamTalian={dalamTalian} tarikh={param[0]} guruId={param[1]} />
         ) : laluan === 'makluman' && param[0] === 'semua' && keahlian.ibuPejabat ? (
           <MaklumanUrus key="semua" mod="semua" makluman={mak.makluman} status={mak.status} sekolahId={null} jumlahGuru={guruAktif()} sedia={mak.sedia} ralat={mak.ralat} dalamTalian={dalamTalian} hantar={mak.hantar} padam={mak.padam} />
         ) : laluan === 'makluman' && adminAktif && keahlian.sekolah ? (
@@ -220,7 +225,7 @@ function App() {
       {laluan === 'jadual' && <Jadual negeri={profil?.negeri ?? null} {...jadual} />}
       {laluan === 'rph' &&
         (() => {
-          const asas = { uid: sesi.user.id, profil, kal, waktu: jadual.waktu, templat: templat.templat, logo: templat.logo, ...rph };
+          const asas = { uid: sesi.user.id, profil, kal, waktu: jadual.waktu, templat: templat.templat, logo: templat.logo, semakan: semakanSaya, ...rph };
           return param[0] === 'e' ? (
             <RphEdit key={`${param[1]}/${param[2]}`} {...asas} tarikh={param[1]} kunci={param[2]} fokus={param[3]} />
           ) : (

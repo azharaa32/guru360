@@ -2328,3 +2328,49 @@ a.acara-butang {
   font-size: 0.85rem;
   text-align: center;
 }
+
+/* Fasa sekolah, tugas 6: semak RPH */
+.pilih-minggu {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--garis-halus);
+  border-radius: 12px;
+}
+
+.pilih-minggu a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 9px;
+  color: var(--kelabu);
+  font: 600 15px var(--fon);
+  text-decoration: none;
+}
+
+.pilih-minggu a[aria-current='page'] {
+  background: #fff;
+  color: var(--hijau);
+  box-shadow: 0 1px 3px rgba(23, 33, 29, 0.14);
+}
+
+.semak-isi {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.semak-bahagian p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.semak-ringkas .semak-bahagian p {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
