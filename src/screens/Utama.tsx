@@ -65,6 +65,8 @@ interface Props {
   kal: Kalendar;
   waktu: Waktu[];
   rph: Rph[];
+  /** Bilangan makluman untuk kad di bahagian atas; perhatian = belum dibaca atau tindakan belum siap. */
+  makluman?: { jumlah: number; belumBaca: number; belumSiap: number; perhatian: number };
 }
 
 /** Ringkasan minggu persekolahan semasa: RPH siap, draf, belum. */
@@ -140,7 +142,7 @@ function KadHariIni({ kal, waktu, rph }: Pick<Props, 'kal' | 'waktu' | 'rph'>) {
   );
 }
 
-export function Utama({ profil, sedia, kal, waktu, rph }: Props) {
+export function Utama({ profil, sedia, kal, waktu, rph, makluman }: Props) {
   const nama = profil?.nama ?? '';
   const ringkasan = useRingkasanMinggu(kal, waktu, rph);
   return (
@@ -160,6 +162,24 @@ export function Utama({ profil, sedia, kal, waktu, rph }: Props) {
         <Kepala kecil="Selamat datang ke" tajuk="Guru360" sub="Kerja harian guru dalam satu aplikasi" />
       )}
       <main className="isi">
+        {makluman && makluman.jumlah > 0 && (
+          <a href="#/makluman" className={`kad kad-pautan${makluman.perhatian > 0 ? ' kad-garis-emas' : ''}`}>
+            <span className="kad-pautan-teks">
+              <strong>Makluman & tindakan</strong>
+              <span>
+                {makluman.belumSiap > 0
+                  ? `${makluman.belumSiap} tindakan belum siap${makluman.belumBaca > 0 ? ` · ${makluman.belumBaca} belum dibaca` : ''}`
+                  : makluman.belumBaca > 0
+                    ? `${makluman.belumBaca} belum dibaca`
+                    : 'Semua sudah dibaca dan siap'}
+              </span>
+            </span>
+            {makluman.perhatian > 0 && <span className="lencana-kira">{makluman.perhatian > 99 ? '99+' : makluman.perhatian}</span>}
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
         {sedia && !nama && (
           <section className="kad kad-pasang" aria-labelledby="tajuk-lengkap">
             <h2 id="tajuk-lengkap">Lengkapkan profil anda</h2>

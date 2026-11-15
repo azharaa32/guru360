@@ -9,11 +9,13 @@ import { binaKalendar, useCutiBersama, useCutiSendiri } from './lib/kalendar';
 import { useDokumen } from './lib/dokumen';
 import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
+import { useMakluman } from './lib/makluman';
 import { useKeahlian } from './lib/sekolah';
 import { pautanEmel } from './lib/supabase';
 import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
 import { Pengurusan, TiadaSekolah } from './screens/Sekolah';
+import { MaklumanGuru, MaklumanUrus } from './screens/Makluman';
 import { Panduan } from './screens/Panduan';
 import { Takwim } from './screens/Takwim';
 import { Cuti } from './screens/Cuti';
@@ -54,6 +56,8 @@ function App() {
   const negeri = profil?.negeri ?? null;
   // Cuti yang ditetapkan sekolah dan ibu pejabat digabung dengan cuti sendiri guru untuk kalendar dan RPH.
   const bersama = useCutiBersama(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
+  const mak = useMakluman(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
+  const guruAktif = (sekolahId?: string) => keahlian.ahli.filter((a) => a.peranan === 'guru' && a.status === 'aktif' && (!sekolahId || a.sekolah_id === sekolahId)).length;
   const semuaCuti = useMemo(() => [...cutiSendiri.cuti, ...bersama.cuti], [cutiSendiri.cuti, bersama.cuti]);
   const kal = useMemo(() => binaKalendar(negeri, semuaCuti), [negeri, semuaCuti]);
 
@@ -122,6 +126,22 @@ function App() {
               belumHantar={belumHantar}
               simpan={simpan}
             />
+        ) : laluan === 'makluman' && param[0] === 'semua' && keahlian.ibuPejabat ? (
+          <MaklumanUrus key="semua" mod="semua" makluman={mak.makluman} status={mak.status} sekolahId={null} jumlahGuru={guruAktif()} sedia={mak.sedia} ralat={mak.ralat} dalamTalian={dalamTalian} hantar={mak.hantar} padam={mak.padam} />
+        ) : laluan === 'makluman' && adminAktif && keahlian.sekolah ? (
+          <MaklumanUrus
+            key="sekolah"
+            mod="sekolah"
+            makluman={mak.makluman}
+            status={mak.status}
+            sekolahId={keahlian.sekolah.id}
+            jumlahGuru={guruAktif(keahlian.sekolah.id)}
+            sedia={mak.sedia}
+            ralat={mak.ralat}
+            dalamTalian={dalamTalian}
+            hantar={mak.hantar}
+            padam={mak.padam}
+          />
         ) : laluan === 'cuti' && param[0] === 'semua' && keahlian.ibuPejabat ? (
           <Cuti
             mod="semua"
@@ -164,7 +184,38 @@ function App() {
   return (
     <div className="apl">
       {jalur}
-      {laluan === 'utama' && <Utama profil={profil} sedia={sedia} kal={kal} waktu={jadual.waktu} rph={rph.rph} />}
+      {laluan === 'utama' && (
+        <Utama
+          profil={profil}
+          sedia={sedia}
+          kal={kal}
+          waktu={jadual.waktu}
+          rph={rph.rph}
+          makluman={{
+            jumlah: mak.makluman.length,
+            belumBaca: mak.makluman.filter((m) => !mak.status.some((x) => x.makluman_id === m.id && x.guru_id === uid)).length,
+            belumSiap: mak.makluman.filter((m) => m.jenis === 'tindakan' && !mak.status.some((x) => x.makluman_id === m.id && x.guru_id === uid && x.siap_pada)).length,
+            perhatian: mak.makluman.filter((m) => {
+              const st = mak.status.find((x) => x.makluman_id === m.id && x.guru_id === uid);
+              return !st || (m.jenis === 'tindakan' && !st.siap_pada);
+            }).length,
+          }}
+        />
+      )}
+      {laluan === 'makluman' && keahlian.sekolah && uid && (
+        <MaklumanGuru
+          makluman={mak.makluman}
+          status={mak.status}
+          uid={uid}
+          sekolahId={keahlian.sekolah.id}
+          namaSekolah={keahlian.sekolah.nama}
+          sedia={mak.sedia}
+          ralat={mak.ralat}
+          dalamTalian={dalamTalian}
+          tandaBaca={mak.tandaBaca}
+          tandaSiap={mak.tandaSiap}
+        />
+      )}
       {laluan === 'hariini' && <HariIni kal={kal} waktu={jadual.waktu} rph={rph.rph} cuti={semuaCuti} program={prog.program} sedia={jadual.sedia} />}
       {laluan === 'jadual' && <Jadual negeri={profil?.negeri ?? null} {...jadual} />}
       {laluan === 'rph' &&

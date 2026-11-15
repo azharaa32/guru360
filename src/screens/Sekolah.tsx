@@ -324,6 +324,30 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula }: { keahli
         )}
 
         {keahlian.peranan === 'admin' && s?.status === 'aktif' && (
+          <a href="#/makluman" className="kad kad-pautan">
+            <span className="kad-pautan-teks">
+              <strong>Makluman & tindakan</strong>
+              <span>Hantar kepada guru sekolah ini; lihat siapa sudah baca dan siap</span>
+            </span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
+
+        {keahlian.ibuPejabat && (
+          <a href="#/makluman/semua" className="kad kad-pautan">
+            <span className="kad-pautan-teks">
+              <strong>Makluman semua sekolah</strong>
+              <span>Daripada ibu pejabat kepada guru semua sekolah</span>
+            </span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
+
+        {keahlian.peranan === 'admin' && s?.status === 'aktif' && (
           <a href="#/templat" className="kad kad-pautan">
             <span className="kad-pautan-teks">
               <strong>Kepala surat dan logo</strong>

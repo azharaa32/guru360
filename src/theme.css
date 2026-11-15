@@ -2294,3 +2294,37 @@ a.acara-butang {
 .baris-ahli .pil {
   flex: none;
 }
+
+/* Fasa sekolah, tugas 5: makluman dan tindakan */
+.kad-makluman {
+  gap: 10px;
+}
+
+.baris-pil {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.teks-makluman {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.teks-lewat {
+  color: var(--merah, #b3261e);
+  font-weight: 600;
+}
+
+.lencana-kira {
+  flex: none;
+  min-width: 26px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--emas, #e8a317);
+  color: #1c1c1c;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+}
