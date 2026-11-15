@@ -16,7 +16,7 @@ const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 
   { nama: 'Memo', ikon: 'memo', warna: 'emas', ke: '#/surat' },
   { nama: 'Surat', ikon: 'surat', warna: 'emas', ke: '#/surat' },
   { nama: 'OPR', ikon: 'opr', warna: 'merah', ke: '#/opr' },
-  { nama: 'Jobskop', ikon: 'jobskop', warna: 'merah' },
+  { nama: 'Jobskop', ikon: 'jobskop', warna: 'merah', ke: '#/jobskop' },
 ];
 
 function KadPasang() {

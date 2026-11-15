@@ -13,6 +13,7 @@ import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
 import { Takwim } from './screens/Takwim';
 import { Cuti } from './screens/Cuti';
+import { JobskopEdit, JobskopPilih, JobskopUtama } from './screens/Jobskop';
 import { HariIni } from './screens/HariIni';
 import { Jadual } from './screens/Jadual';
 import { KertasEdit, KertasSenarai } from './screens/KertasKerja';
@@ -96,6 +97,11 @@ function App() {
         (() => {
           const asas = { ...dok, uid: sesi.user.id, dalamTalian, program: prog.program, profil, templat: templat.templat, logo: templat.logo };
           return param[0] && param[0] !== 'p' ? <OprEdit key={param[0]} {...asas} id={param[0]} /> : <OprSenarai {...asas} programId={param[0] === 'p' ? param[1] : undefined} />;
+        })()}
+      {laluan === 'jobskop' &&
+        (() => {
+          const asas = { ...dok, profil, templat: templat.templat, logo: templat.logo };
+          return param[0] === 'pilih' ? <JobskopPilih {...asas} /> : param[0] === 'e' ? <JobskopEdit key={param[1]} {...asas} id={param[1]} /> : <JobskopUtama {...asas} />;
         })()}
       {laluan === 'takwim' && (
         <Takwim

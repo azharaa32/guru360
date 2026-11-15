@@ -718,3 +718,34 @@ export async function pdfGambarPenuh(jpeg: Uint8Array, tajuk: string): Promise<U
   pdf.addPage([A4.lebar, A4.tinggi]).drawImage(imej, { x: 0, y: 0, width: A4.lebar, height: A4.tinggi });
   return pdf.save();
 }
+
+export interface JobskopPdf {
+  tahun: number;
+  nama: string;
+  jawatan: { nama: string; kumpulan: { tajuk: string; tugas: string[] }[] }[];
+  disahkan: { nama: string; jawatan: string };
+}
+
+export async function pdfJobskop(k: KepalaSurat, j: JobskopPdf): Promise<Uint8Array> {
+  const d = await Dokumen.mula(`Jobskop ${j.tahun}`);
+  await d.kepalaSurat(k);
+  d.tajuk(`SENARAI TUGAS (JOBSKOP) TAHUN ${j.tahun}`);
+  d.medan('NAMA', j.nama || '-');
+  d.medan('JAWATAN', j.jawatan.map((x, i) => `${i + 1}. ${x.nama}`).join('\n') || '-');
+  d.jarak(4);
+  j.jawatan.forEach((x, i) => {
+    d.pastikanRuang(30);
+    d.subtajuk(`${i + 1}.0  ${x.nama}`);
+    for (const g of x.kumpulan) {
+      if (g.tajuk) {
+        d.pastikanRuang(20);
+        d.baris(g.tajuk, true);
+      }
+      d.senarai(g.tugas, (n) => `${n + 1}.`);
+    }
+  });
+  d.tandatangan({ tajuk: 'Disediakan oleh:', nama: j.nama }, { tajuk: 'Disahkan oleh:', nama: j.disahkan.nama, jawatan: j.disahkan.jawatan });
+  d.jarak(2);
+  d.baris('Senarai tugas berpandukan MySG: Garis Panduan Tadbir Urus Sekolah Rendah KPM.');
+  return d.siap();
+}

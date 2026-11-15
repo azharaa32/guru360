@@ -9,7 +9,7 @@ const tab: { id: 'utama' | 'takwim' | 'profil'; label: string; href: string }[] 
 ];
 
 export function NavBawah({ aktif: laluan }: { aktif: Laluan }) {
-  const aktif = laluan === 'templat' ? 'profil' : laluan === 'jadual' || laluan === 'rph' || laluan === 'hariini' || laluan === 'kertas' || laluan === 'surat' || laluan === 'minit' || laluan === 'opr' ? 'utama' : laluan === 'cuti' ? 'takwim' : laluan;
+  const aktif = laluan === 'templat' ? 'profil' : laluan === 'jadual' || laluan === 'rph' || laluan === 'hariini' || laluan === 'kertas' || laluan === 'surat' || laluan === 'minit' || laluan === 'opr' || laluan === 'jobskop' ? 'utama' : laluan === 'cuti' ? 'takwim' : laluan;
   return (
     <nav className="nav-bawah" aria-label="Navigasi utama">
       {tab.map((t) => (

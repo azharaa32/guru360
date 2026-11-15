@@ -1,6 +1,6 @@
 import { useSenarai } from './senarai';
 
-export type JenisDokumen = 'kertas_kerja' | 'memo' | 'surat' | 'minit' | 'opr';
+export type JenisDokumen = 'kertas_kerja' | 'memo' | 'surat' | 'minit' | 'opr' | 'jobskop';
 
 export interface Dokumen<T = Record<string, unknown>> {
   id: string;

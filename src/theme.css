@@ -2043,3 +2043,182 @@ a.acara-butang {
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(23, 33, 29, 0.08);
 }
+
+/* Jobskop */
+.nota-kecil {
+  font-size: 12px;
+  color: var(--kelabu);
+  margin-left: auto;
+}
+
+.jawatan-kad {
+  padding: 0;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+}
+
+.jawatan-pautan {
+  flex: 1;
+  min-width: 0;
+  min-height: 60px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--dakwat);
+  text-decoration: none;
+  border-radius: 12px;
+}
+
+.jawatan-alih {
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--garis);
+}
+
+.jawatan-alih button:disabled {
+  opacity: 0.3;
+}
+
+.tab-tiga {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.tab-tiga button {
+  font-size: 13px;
+}
+
+.isi-berbar {
+  padding-bottom: 176px;
+}
+
+.senarai-pilih {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.senarai-pilih > li + li {
+  border-top: 1px solid var(--garis);
+}
+
+.senarai-pilih > li.dipilih {
+  background: #fbf0f2;
+}
+
+.senarai-pilih > li:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.senarai-pilih > li:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+.pilih-baris {
+  display: flex;
+  align-items: stretch;
+}
+
+.pilih-label {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 6px 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pilih-label input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  accent-color: var(--merah);
+}
+
+.pilih-label-kecil {
+  min-height: 44px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.pilih-kod {
+  flex: none;
+  min-height: 52px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--kelabu);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pilih-isi {
+  padding: 0 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pilih-kumpulan {
+  display: flex;
+  flex-direction: column;
+}
+
+.pilih-tajuk {
+  font-size: 13px;
+}
+
+.pilih-tugas {
+  margin: 2px 0 6px;
+  padding-left: 22px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #2b3833;
+  white-space: pre-line;
+}
+
+.bar-tindakan {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--bawah) + 88px);
+  z-index: 5;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  background: #fff;
+  border-top: 1px solid var(--garis);
+  box-shadow: 0 -4px 14px rgba(23, 33, 29, 0.08);
+  display: flex;
+}
+
+.bar-tindakan .butang {
+  flex: 1;
+}
+
+.baris-tugas {
+  align-items: flex-start;
+}
+
+.baris-tugas textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--garis);
+  border-radius: 10px;
+  font: 400 14px/1.45 var(--fon);
+  color: var(--dakwat);
+  background: #fff;
+  resize: vertical;
+}
+
+.baris-tugas .penanda {
+  padding-top: 10px;
+}
