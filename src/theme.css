@@ -1899,3 +1899,64 @@ a.acara-butang {
   text-transform: uppercase;
   color: var(--kelabu);
 }
+
+/* Minit mesyuarat */
+.tiga-butang {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tiga-butang .butang {
+  padding: 0 6px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.baris-hadir {
+  border: 0;
+  border-top: 1px solid var(--garis-halus);
+  padding: 10px 0 0;
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tanda-kecil {
+  flex: none;
+  font-size: 14px;
+  padding-right: 4px;
+}
+
+.butang-putus-hijau {
+  border: 1.5px dashed var(--hijau-2);
+  background: var(--hijau-lembut);
+  color: var(--hijau);
+}
+
+.senarai-curai {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.senarai-curai li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 10px;
+  border-left: 3px solid #b7892b;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.senarai-curai span {
+  font-size: 13px;
+  color: var(--kelabu);
+}
+
+.senarai-curai .mono {
+  font-size: 12px;
+}

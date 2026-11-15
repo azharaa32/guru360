@@ -355,6 +355,21 @@ export class Dokumen {
     if (jawatan) this.baris(jawatan);
   }
 
+  /** Mula halaman baharu (contohnya satu helaian bagi setiap penerima). */
+  halamanBaru() {
+    this.halamanBaharu();
+  }
+
+  /** Beberapa garis kosong untuk ditulis tangan. */
+  garisTulis(bil: number) {
+    for (let i = 0; i < bil; i++) {
+      this.perluRuang(9 * MM);
+      this.y -= 9 * MM;
+      this.halaman.drawLine({ start: { x: TEPI.kiri, y: this.y }, end: { x: A4.lebar - TEPI.kanan, y: this.y }, thickness: 0.4, color: KELABU });
+    }
+    this.y -= 3 * MM;
+  }
+
   /** Tambah nombor halaman dan pulangkan fail PDF. */
   async siap(): Promise<Uint8Array> {
     const semua = this.pdf.getPages();
@@ -608,6 +623,87 @@ export async function pdfSurat(k: KepalaSurat, s: SuratPdf): Promise<Uint8Array>
     d.baris('Tarikh                : ........................................');
     d.jarak(3);
     d.baris('* Potong yang tidak berkenaan.');
+  }
+  return d.siap();
+}
+
+export interface MinitPdf {
+  tajuk: string;
+  tarikh: string; // sudah diformat
+  masa: string;
+  tempat: string;
+  hadir: { nama: string; jawatan: string }[];
+  tidakHadir: { nama: string; jawatan: string }[];
+  agenda: { tajuk: string; perbincangan: string; tindakan: string }[]; // tindakan: "MAKLUMAN" atau "TINDAKAN: ..."
+  penutup: string;
+  disediakan: { nama: string; jawatan: string };
+  disahkan: { nama: string; jawatan: string };
+}
+
+/** PDF minit mesyuarat penuh: butiran, kehadiran, agenda dengan lajur tindakan, dan pengesahan. */
+export async function pdfMinit(k: KepalaSurat, m: MinitPdf): Promise<Uint8Array> {
+  const d = await Dokumen.mula(m.tajuk || 'Minit mesyuarat');
+  await d.kepalaSurat(k);
+  d.tajuk('MINIT MESYUARAT');
+  d.tajuk(m.tajuk || '(NAMA MESYUARAT BELUM DIISI)');
+  d.medan('Tarikh', m.tarikh);
+  d.medan('Masa', m.masa);
+  d.medan('Tempat', m.tempat);
+  d.jarak(3);
+  d.subtajuk(`KEHADIRAN (${m.hadir.length} ORANG)`);
+  d.grid([0.1, 0.5, 0.4], [{ sel: ['BIL', 'NAMA', 'JAWATAN'], tebal: true }, ...m.hadir.map((h, i) => ({ sel: [String(i + 1), h.nama, h.jawatan] }))]);
+  d.jarak(3);
+  if (m.tidakHadir.length) {
+    d.pastikanRuang(30);
+    d.subtajuk(`TIDAK HADIR (${m.tidakHadir.length} ORANG)`);
+    d.grid([0.1, 0.5, 0.4], [{ sel: ['BIL', 'NAMA', 'JAWATAN'], tebal: true }, ...m.tidakHadir.map((h, i) => ({ sel: [String(i + 1), h.nama, h.jawatan] }))]);
+    d.jarak(3);
+  }
+  d.pastikanRuang(40);
+  d.subtajuk('PERKARA');
+  d.grid([0.08, 0.66, 0.26], [{ sel: ['BIL', 'PERKARA DAN PERBINCANGAN', 'TINDAKAN'], tebal: true }]);
+  m.agenda.forEach((a, i) => {
+    d.grid([0.08, 0.66, 0.26], [{ sel: [String(i + 1), a.perbincangan ? `${a.tajuk}\n${a.perbincangan}` : a.tajuk, a.tindakan] }]);
+  });
+  d.jarak(4);
+  if (m.penutup.trim()) {
+    d.pastikanRuang(30);
+    d.subtajuk('PENUTUP');
+    d.perenggan(m.penutup);
+  }
+  d.tandatangan({ tajuk: 'Disediakan oleh:', nama: m.disediakan.nama, jawatan: m.disediakan.jawatan }, { tajuk: 'Disahkan oleh:', nama: m.disahkan.nama, jawatan: m.disahkan.jawatan });
+  return d.siap();
+}
+
+export interface CuraiPdf {
+  mesyuarat: string;
+  tarikh: string;
+  daripada: { nama: string; jawatan: string };
+  helaian: { penerima: string; butir: { no: number; tajuk: string; perbincangan: string; tarikhAkhir: string }[] }[];
+}
+
+/** PDF minit curai: satu helaian bagi setiap penerima, dengan ruang maklum balas. */
+export async function pdfMinitCurai(k: KepalaSurat, c: CuraiPdf): Promise<Uint8Array> {
+  const d = await Dokumen.mula(`Minit curai ${c.mesyuarat}`);
+  for (const [i, h] of c.helaian.entries()) {
+    if (i > 0) d.halamanBaru();
+    await d.kepalaSurat(k);
+    d.tajuk('MINIT CURAI');
+    d.medan('Kepada', h.penerima);
+    d.medan('Daripada', [c.daripada.nama, c.daripada.jawatan].filter(Boolean).join(', '));
+    d.medan('Mesyuarat', c.mesyuarat);
+    d.medan('Tarikh mesyuarat', c.tarikh);
+    d.jarak(3);
+    d.perenggan('Mesyuarat telah memutuskan perkara berikut untuk tindakan tuan/puan. Sila ambil tindakan dan kemukakan maklum balas sebelum tarikh akhir yang dinyatakan.');
+    d.grid(
+      [0.1, 0.62, 0.28],
+      [{ sel: ['NO.', 'PERKARA DAN KEPUTUSAN MESYUARAT', 'TARIKH AKHIR'], tebal: true }, ...h.butir.map((b) => ({ sel: [String(b.no), b.perbincangan ? `${b.tajuk}\n${b.perbincangan}` : b.tajuk, b.tarikhAkhir || '-'] }))],
+    );
+    d.jarak(5);
+    d.pastikanRuang(70);
+    d.subtajuk('MAKLUM BALAS TINDAKAN');
+    d.garisTulis(4);
+    d.tandatangan({ tajuk: 'Tandatangan penerima:', nama: '', jawatan: 'Tarikh:' }, { tajuk: 'Urus setia:', nama: c.daripada.nama, jawatan: c.daripada.jawatan });
   }
   return d.siap();
 }

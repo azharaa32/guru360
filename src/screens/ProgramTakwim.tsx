@@ -198,12 +198,15 @@ export function ProgramTakwim({ program, sedia, tertunda, ralat, pilih, simpanPr
             {edit ? 'Simpan perubahan' : 'Simpan program'}
           </button>
           {edit && (
-            <div className="dua-butang">
+            <div className="tiga-butang">
               <a href={`#/kertas/p/${edit}`} className="butang butang-garis butang-kecil">
                 Kertas kerja
               </a>
               <a href={`#/surat/p/${edit}`} className="butang butang-garis butang-kecil">
                 Surat panggilan
+              </a>
+              <a href={`#/minit/p/${edit}`} className="butang butang-garis butang-kecil">
+                Minit
               </a>
             </div>
           )}

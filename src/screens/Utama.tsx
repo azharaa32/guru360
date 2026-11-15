@@ -12,7 +12,7 @@ const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 
   { nama: 'RPH', ikon: 'rph', warna: 'hijau', ke: '#/rph' },
   { nama: 'Jadual', ikon: 'jadual', warna: 'hijau', ke: '#/jadual' },
   { nama: 'Kertas Kerja', ikon: 'kertas', warna: 'biru', ke: '#/kertas' },
-  { nama: 'Minit', ikon: 'minit', warna: 'biru' },
+  { nama: 'Minit', ikon: 'minit', warna: 'biru', ke: '#/minit' },
   { nama: 'Memo', ikon: 'memo', warna: 'emas', ke: '#/surat' },
   { nama: 'Surat', ikon: 'surat', warna: 'emas', ke: '#/surat' },
   { nama: 'OPR', ikon: 'opr', warna: 'merah' },

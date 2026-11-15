@@ -259,3 +259,95 @@ export function kemasSurat(i: IsiSurat): IsiSurat {
     penandatangan: besarkan(i.penandatangan),
   };
 }
+
+// ---------------------------------------------------------------- Minit mesyuarat dan minit curai
+
+export interface Hadirin {
+  nama: string;
+  jawatan: string;
+  hadir: boolean;
+}
+
+export interface Agenda {
+  tajuk: string;
+  jenis: 'makluman' | 'tindakan';
+  perbincangan: string;
+  tindakan_oleh: string;
+  tarikh_akhir: string; // YYYY-MM-DD atau kosong
+}
+
+export interface IsiMinit {
+  tarikh: string;
+  masa: string;
+  tempat: string;
+  kehadiran: Hadirin[];
+  agenda: Agenda[];
+  penutup: string;
+  disediakan: Orang;
+  disahkan: Orang;
+}
+
+export const AGENDA_KOSONG: Agenda = { tajuk: '', jenis: 'makluman', perbincangan: '', tindakan_oleh: '', tarikh_akhir: '' };
+export const AGENDA_LAZIM = ['UCAPAN PENGERUSI', 'PENGESAHAN MINIT MESYUARAT YANG LALU', 'PERKARA-PERKARA BERBANGKIT', 'HAL-HAL LAIN', 'PENANGGUHAN'];
+
+export const MINIT_KOSONG: IsiMinit = {
+  tarikh: '',
+  masa: '',
+  tempat: '',
+  kehadiran: [],
+  agenda: [],
+  penutup: '',
+  disediakan: { jawatan: 'SETIAUSAHA', nama: '' },
+  disahkan: { jawatan: 'PENGERUSI', nama: '' },
+};
+
+export function isiMinit(d: Dokumen | undefined): IsiMinit {
+  const i = (d?.isi ?? {}) as Partial<IsiMinit>;
+  return {
+    ...MINIT_KOSONG,
+    ...i,
+    kehadiran: Array.isArray(i.kehadiran) ? i.kehadiran.map((h) => ({ nama: h.nama ?? '', jawatan: h.jawatan ?? '', hadir: h.hadir !== false })) : [],
+    agenda: Array.isArray(i.agenda) ? i.agenda.map((a) => ({ ...AGENDA_KOSONG, ...a, jenis: String(a.jenis).toLowerCase() === 'tindakan' ? 'tindakan' : 'makluman' })) : [],
+    disediakan: { ...MINIT_KOSONG.disediakan, ...(i.disediakan ?? {}) },
+    disahkan: { ...MINIT_KOSONG.disahkan, ...(i.disahkan ?? {}) },
+  };
+}
+
+export function kemasMinit(i: IsiMinit): IsiMinit {
+  const ada = (s: string) => s.trim().length > 0;
+  const bersih = besarkan({
+    ...i,
+    kehadiran: i.kehadiran.filter((h) => ada(h.nama)),
+    agenda: i.agenda.filter((a) => ada(a.tajuk) || ada(a.perbincangan)).map((a) => (a.jenis === 'tindakan' ? a : { ...a, tindakan_oleh: '', tarikh_akhir: '' })),
+  });
+  // `jenis` ialah nilai sistem, bukan teks guru: jangan biar ia ditukar kepada huruf besar.
+  return { ...bersih, agenda: bersih.agenda.map((a) => ({ ...a, jenis: String(a.jenis).toLowerCase() === 'tindakan' ? 'tindakan' : 'makluman' })) };
+}
+
+export function minitLengkap(tajuk: string, i: IsiMinit): boolean {
+  const ada = (s: string) => s.trim().length > 0;
+  return ada(tajuk) && ada(i.tarikh) && i.kehadiran.some((h) => h.hadir && ada(h.nama)) && i.agenda.some((a) => ada(a.tajuk));
+}
+
+export interface Curai {
+  penerima: string;
+  butir: { no: number; tajuk: string; perbincangan: string; tarikh_akhir: string }[];
+}
+
+/**
+ * Minit curai: agenda bertanda tindakan, dikumpul mengikut penerima.
+ * "ALI, SITI" atau "ALI DAN SITI" pada medan Tindakan oleh memberi dua penerima.
+ */
+export function senaraiCurai(i: IsiMinit): Curai[] {
+  const peta = new Map<string, Curai>();
+  i.agenda.forEach((a, idx) => {
+    if (a.jenis !== 'tindakan' || !a.tajuk.trim()) return;
+    const nama = a.tindakan_oleh.toUpperCase().split(/,|;|\n|\s+DAN\s+/).map((s) => s.trim()).filter(Boolean);
+    for (const n of nama.length ? nama : ['(PENERIMA BELUM DIISI)']) {
+      const c = peta.get(n) ?? { penerima: n, butir: [] };
+      c.butir.push({ no: idx + 1, tajuk: a.tajuk.trim().toUpperCase(), perbincangan: a.perbincangan.trim().toUpperCase(), tarikh_akhir: a.tarikh_akhir });
+      peta.set(n, c);
+    }
+  });
+  return [...peta.values()];
+}
