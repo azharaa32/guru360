@@ -119,6 +119,7 @@ function App() {
       {laluan === 'cuti' && <Cuti negeri={profil?.negeri ?? null} {...cutiSendiri} />}
       {laluan === 'profil' && (
         <Profil
+          uid={sesi.user.id}
           dalamTalian={dalamTalian}
           emel={sesi.user.email ?? ''}
           profil={profil}
