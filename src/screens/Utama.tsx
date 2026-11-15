@@ -15,7 +15,7 @@ const modul: { nama: string; ikon: NamaIkon; warna: 'hijau' | 'biru' | 'emas' | 
   { nama: 'Minit', ikon: 'minit', warna: 'biru', ke: '#/minit' },
   { nama: 'Memo', ikon: 'memo', warna: 'emas', ke: '#/surat' },
   { nama: 'Surat', ikon: 'surat', warna: 'emas', ke: '#/surat' },
-  { nama: 'OPR', ikon: 'opr', warna: 'merah' },
+  { nama: 'OPR', ikon: 'opr', warna: 'merah', ke: '#/opr' },
   { nama: 'Jobskop', ikon: 'jobskop', warna: 'merah' },
 ];
 

@@ -707,3 +707,14 @@ export async function pdfMinitCurai(k: KepalaSurat, c: CuraiPdf): Promise<Uint8A
   }
   return d.siap();
 }
+
+/** PDF satu halaman A4 daripada gambar JPEG penuh halaman (digunakan oleh OPR). */
+export async function pdfGambarPenuh(jpeg: Uint8Array, tajuk: string): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(tajuk);
+  pdf.setCreator('Guru360');
+  pdf.setProducer('Guru360');
+  const imej = await pdf.embedJpg(jpeg);
+  pdf.addPage([A4.lebar, A4.tinggi]).drawImage(imej, { x: 0, y: 0, width: A4.lebar, height: A4.tinggi });
+  return pdf.save();
+}

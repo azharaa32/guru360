@@ -14,19 +14,21 @@ export function usePdf() {
 
   useEffect(() => () => void (pdf && URL.revokeObjectURL(pdf.url)), [pdf]);
 
-  const jana = useCallback(async (bina: () => Promise<Uint8Array>, namaFail: string, tajuk: string) => {
+  const jana = useCallback(async (bina: () => Promise<Uint8Array>, namaFail: string, tajuk: string, jenis: 'application/pdf' | 'image/jpeg' = 'application/pdf') => {
     setMenjana(true);
     setRalat(null);
     try {
       const bait = await bina();
-      const fail = new File([bait as BlobPart], namaFail, { type: 'application/pdf' });
+      const fail = new File([bait as BlobPart], namaFail, { type: jenis });
       setPdf({ url: URL.createObjectURL(fail), fail, tajuk });
     } catch (e) {
       console.error(e);
       setPdf(null);
       setRalat(
-        navigator.onLine
-          ? 'PDF tidak dapat dijana. Cuba lagi.'
+        e instanceof Error && /terlalu panjang/i.test(e.message)
+          ? e.message
+          : navigator.onLine
+          ? 'Fail tidak dapat dijana. Cuba lagi.'
           : 'Enjin PDF belum dimuat turun ke telefon ini. Sambung internet sekali, kemudian cuba lagi.',
       );
     } finally {
@@ -56,12 +58,16 @@ export function HasilPdf({ pdf, ralat }: { pdf: Hasil | null; ralat: string | nu
             {ralat}
           </p>
         )}
-        {pdf && <p className="mesej mesej-ok">PDF siap: {pdf.tajuk}.</p>}
+        {pdf && (
+          <p className="mesej mesej-ok">
+            {pdf.fail.type === 'image/jpeg' ? 'JPEG' : 'PDF'} siap: {pdf.tajuk}.
+          </p>
+        )}
       </div>
       {pdf && (
         <div className="dua-butang">
           <a className="butang butang-garis" href={pdf.url} download={pdf.fail.name} target="_blank" rel="noopener">
-            Buka PDF
+            {pdf.fail.type === 'image/jpeg' ? 'Buka JPEG' : 'Buka PDF'}
           </a>
           {bolehKongsi ? (
             <button type="button" className="butang butang-garis" onClick={kongsi}>
