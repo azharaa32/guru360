@@ -110,3 +110,46 @@ export function namaPeranan(k: Keahlian): string {
   if (k.peranan === 'guru') p.push('Guru');
   return p.join(' · ') || 'Tiada';
 }
+
+export interface DataSekolahBaru {
+  nama: string;
+  kod: string;
+  negeri: string;
+  admin_nama: string;
+  emel: string;
+}
+
+export interface Permohonan {
+  id: string;
+  nama: string;
+  kod: string;
+  negeri: string | null;
+  dicipta_pada: string;
+  admin_nama: string;
+  admin_emel: string;
+}
+
+export type Hasil<T extends object = object> = ({ ok: true } & T) | { ok: false; ralat: string };
+
+/** Panggil fungsi pelayan; pulangkan hasil atau teks ralat yang boleh dipaparkan kepada pengguna. */
+async function panggil<T extends object = object>(fungsi: string, badan: object): Promise<Hasil<T>> {
+  if (!navigator.onLine) return { ok: false, ralat: 'Tiada sambungan internet. Cuba lagi apabila ada talian.' };
+  try {
+    const { data, error } = await supabase.functions.invoke(fungsi, { body: badan });
+    if (data && typeof data === 'object' && 'ok' in data) return data as Hasil<T>;
+    const konteks = (error as { context?: Response } | null)?.context;
+    if (konteks && typeof konteks.json === 'function') {
+      const j = (await konteks.json().catch(() => null)) as { ralat?: string } | null;
+      if (j?.ralat) return { ok: false, ralat: j.ralat };
+    }
+    return { ok: false, ralat: 'Pelayan tidak menjawab. Cuba lagi sebentar.' };
+  } catch {
+    return { ok: false, ralat: 'Tiada sambungan internet. Cuba lagi apabila ada talian.' };
+  }
+}
+
+/** Orang awam mendaftar sekolah; sekolah menunggu kelulusan ibu pejabat. */
+export const daftarSekolah = (d: DataSekolahBaru) => panggil('daftar-sekolah', d);
+export const senaraiMenunggu = () => panggil<{ senarai: Permohonan[] }>('urus-sekolah', { aksi: 'menunggu' });
+export const putusSekolah = (aksi: 'lulus' | 'tolak', sekolahId: string) => panggil('urus-sekolah', { aksi, sekolah_id: sekolahId });
+export const ciptaSekolah = (d: DataSekolahBaru) => panggil('urus-sekolah', { aksi: 'cipta', ...d });

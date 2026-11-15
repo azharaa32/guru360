@@ -4,6 +4,8 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config';
 // Ralat daripada pautan emel (contohnya pautan luput) tiba dalam alamat; baca sebelum Supabase membersihkannya.
 const param = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 export const ralatPautan: string | null = param.get('error_description');
+/** Pautan jemputan daripada emel: pengguna baharu mesti menetapkan kata laluan sebelum meneruskan. */
+export const pautanJemputan = param.get('type') === 'invite' && !ralatPautan;
 if (ralatPautan) window.history.replaceState(null, '', window.location.pathname);
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {

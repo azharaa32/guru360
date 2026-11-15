@@ -1,5 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
+import { daftarSekolah } from '../lib/sekolah';
 import { alamatAplikasi, ralatPautan, supabase, terjemahRalat } from '../lib/supabase';
+import { DaftarSekolah } from './DaftarSekolah';
 
 type Mod = 'masuk' | 'daftar' | 'lupa';
 type Mesej = { jenis: 'ralat' | 'ok'; teks: string } | null;
@@ -72,6 +74,19 @@ function PetakMesej({ mesej }: { mesej: Mesej }) {
   );
 }
 
+function TabMasuk({ mod, tukar }: { mod: Mod; tukar: (m: Mod) => void }) {
+  return (
+    <div className="tab" role="group" aria-label="Pilih tindakan">
+      <button type="button" aria-pressed={mod === 'masuk'} onClick={() => tukar('masuk')}>
+        Log masuk
+      </button>
+      <button type="button" aria-pressed={mod === 'daftar'} onClick={() => tukar('daftar')}>
+        Daftar sekolah
+      </button>
+    </div>
+  );
+}
+
 export function Masuk() {
   const [mod, setMod] = useState<Mod>('masuk');
   const [emel, setEmel] = useState('');
@@ -94,34 +109,11 @@ export function Masuk() {
       setMesej({ jenis: 'ralat', teks: 'Tiada sambungan internet. Log masuk memerlukan talian.' });
       return;
     }
-    if (mod === 'daftar' && kata.length < PANJANG_MIN) {
-      setMesej({ jenis: 'ralat', teks: `Kata laluan mesti sekurang-kurangnya ${PANJANG_MIN} aksara.` });
-      return;
-    }
     setSibuk(true);
     try {
       if (mod === 'masuk') {
         const { error } = await supabase.auth.signInWithPassword({ email: alamat, password: kata });
         if (error) setMesej({ jenis: 'ralat', teks: terjemahRalat(error.message) });
-      } else if (mod === 'daftar') {
-        const { data, error } = await supabase.auth.signUp({
-          email: alamat,
-          password: kata,
-          options: { emailRedirectTo: alamatAplikasi() },
-        });
-        if (error) setMesej({ jenis: 'ralat', teks: terjemahRalat(error.message) });
-        else if (data.user && data.user.identities && data.user.identities.length === 0) {
-          setMod('masuk');
-          setKata('');
-          setMesej({ jenis: 'ralat', teks: 'Emel ini sudah berdaftar. Sila log masuk.' });
-        } else if (!data.session) {
-          setMod('masuk');
-          setKata('');
-          setMesej({
-            jenis: 'ok',
-            teks: `Akaun dicipta. Kami hantar emel pengesahan ke ${alamat}. Tekan pautan di dalamnya, kemudian log masuk di sini.`,
-          });
-        }
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(alamat, { redirectTo: alamatAplikasi() });
         if (error) setMesej({ jenis: 'ralat', teks: terjemahRalat(error.message) });
@@ -140,7 +132,14 @@ export function Masuk() {
     }
   };
 
-  const butang = { masuk: 'Log masuk', daftar: 'Daftar akaun', lupa: 'Hantar pautan' }[mod];
+  const butang = mod === 'lupa' ? 'Hantar pautan' : 'Log masuk';
+
+  if (mod === 'daftar')
+    return (
+      <Jenama>
+        <DaftarSekolah kepala={<TabMasuk mod={mod} tukar={tukarMod} />} daftar={daftarSekolah} kembali={() => tukarMod('masuk')} />
+      </Jenama>
+    );
 
   return (
     <Jenama>
@@ -151,14 +150,7 @@ export function Masuk() {
             <p>Masukkan emel akaun anda. Kami hantar pautan untuk set kata laluan baharu.</p>
           </>
         ) : (
-          <div className="tab" role="group" aria-label="Pilih tindakan">
-            <button type="button" aria-pressed={mod === 'masuk'} onClick={() => tukarMod('masuk')}>
-              Log masuk
-            </button>
-            <button type="button" aria-pressed={mod === 'daftar'} onClick={() => tukarMod('daftar')}>
-              Daftar
-            </button>
-          </div>
+          <TabMasuk mod={mod} tukar={tukarMod} />
         )}
         <div className="medan">
           <label htmlFor="emel">Emel</label>
@@ -175,7 +167,7 @@ export function Masuk() {
           />
         </div>
         {mod !== 'lupa' && (
-          <MedanKataLaluan id="kata" label="Kata laluan" nilai={kata} tukar={setKata} baharu={mod === 'daftar'} />
+          <MedanKataLaluan id="kata" label="Kata laluan" nilai={kata} tukar={setKata} baharu={false} />
         )}
         <PetakMesej mesej={mesej} />
         <button type="submit" className="butang butang-utama" disabled={sibuk}>
@@ -225,7 +217,8 @@ export function KataLaluanBaharu({ selesai }: { selesai: () => void }) {
   return (
     <Jenama>
       <form className="kad borang" onSubmit={hantar}>
-        <h2>Set kata laluan baharu</h2>
+        <h2>Tetapkan kata laluan</h2>
+        <p>Pilih kata laluan untuk akaun anda. Anda akan guna kata laluan ini untuk log masuk.</p>
         <MedanKataLaluan id="kata-baharu" label="Kata laluan baharu" nilai={kata} tukar={setKata} baharu />
         <PetakMesej mesej={mesej} />
         <button type="submit" className="butang butang-utama" disabled={sibuk}>

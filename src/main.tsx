@@ -101,7 +101,7 @@ function App() {
               simpan={simpan}
             />
         ) : (
-          <Pengurusan keahlian={keahlian} nama={profil?.nama ?? ''} />
+          <Pengurusan keahlian={keahlian} nama={profil?.nama ?? ''} dalamTalian={dalamTalian} muatSemula={cubaLagi} />
         )}
         <NavBawah aktif={laluan === 'profil' ? 'profil' : 'utama'} pengurusan />
       </div>

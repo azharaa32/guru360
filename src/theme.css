@@ -425,6 +425,11 @@ ol {
   gap: 14px;
 }
 
+.borang-sekolah {
+  display: flex;
+  flex-direction: column;
+}
+
 .medan {
   display: flex;
   flex-direction: column;

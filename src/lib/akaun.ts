@@ -1,14 +1,33 @@
 import type { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { useBarisSendiri } from './simpanan';
-import { supabase } from './supabase';
+import { pautanJemputan, supabase } from './supabase';
+
+const KUNCI_TETAP_KATA = 'guru360.tetapKata';
+const ingatTetapKata = (nilai: boolean) => {
+  try {
+    if (nilai) sessionStorage.setItem(KUNCI_TETAP_KATA, '1');
+    else sessionStorage.removeItem(KUNCI_TETAP_KATA);
+  } catch {
+    /* storan tidak tersedia */
+  }
+};
+// Diingat dalam tab ini supaya muat semula halaman tidak melangkau langkah menetapkan kata laluan.
+if (pautanJemputan) ingatTetapKata(true);
+const perluTetapKata = () => {
+  try {
+    return sessionStorage.getItem(KUNCI_TETAP_KATA) === '1';
+  } catch {
+    return false;
+  }
+};
 
 export type KeadaanSesi = { status: 'memuat' } | { status: 'tiada' } | { status: 'ada'; sesi: Session };
 
 /** Sesi log masuk. Disimpan dalam telefon, jadi guru kekal log masuk walaupun tanpa internet. */
 export function useSesi(): { keadaan: KeadaanSesi; pemulihan: boolean; tamatPemulihan: () => void } {
   const [keadaan, setKeadaan] = useState<KeadaanSesi>({ status: 'memuat' });
-  const [pemulihan, setPemulihan] = useState(false);
+  const [pemulihan, setPemulihan] = useState(perluTetapKata);
   useEffect(() => {
     let hidup = true;
     const tetap = (sesi: Session | null) => hidup && setKeadaan(sesi ? { status: 'ada', sesi } : { status: 'tiada' });
@@ -18,7 +37,10 @@ export function useSesi(): { keadaan: KeadaanSesi; pemulihan: boolean; tamatPemu
       .catch(() => tetap(null));
     const { data } = supabase.auth.onAuthStateChange((acara, sesi) => {
       if (acara === 'PASSWORD_RECOVERY') setPemulihan(true);
-      if (acara === 'SIGNED_OUT') setPemulihan(false);
+      if (acara === 'SIGNED_OUT') {
+        ingatTetapKata(false);
+        setPemulihan(false);
+      }
       tetap(sesi);
     });
     return () => {
@@ -26,7 +48,14 @@ export function useSesi(): { keadaan: KeadaanSesi; pemulihan: boolean; tamatPemu
       data.subscription.unsubscribe();
     };
   }, []);
-  return { keadaan, pemulihan, tamatPemulihan: () => setPemulihan(false) };
+  return {
+    keadaan,
+    pemulihan,
+    tamatPemulihan: () => {
+      ingatTetapKata(false);
+      setPemulihan(false);
+    },
+  };
 }
 
 export const NEGERI = [
