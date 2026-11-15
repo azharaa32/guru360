@@ -1,5 +1,8 @@
 import { KALENDAR, SESI, hujungMinggu, kumpulan, type EntriKalendar, type JenisCuti } from '../data/kalendar';
+import { useCallback, useEffect, useState } from 'react';
 import { useSenarai } from './senarai';
+import { bacaStoran, tulisStoran } from './simpanan';
+import { supabase, terjemahRalat } from './supabase';
 
 // ---- Tarikh: sentiasa "YYYY-MM-DD" dalam waktu tempatan, supaya tiada anjakan zon waktu ----
 
@@ -60,6 +63,76 @@ export function useCutiSendiri(uid: string | null, dalamTalian: boolean) {
     dalamTalian,
   );
   return { cuti: baris, sedia, tertunda, ralat, simpanCuti: simpanBanyak, padamCuti: padamBaris };
+}
+
+// ---- Cuti bersama (ditetapkan admin sekolah atau ibu pejabat; guru membaca sahaja) ----
+
+/** sekolah_id kosong bermaksud cuti untuk semua sekolah, ditetapkan ibu pejabat. */
+export interface CutiBersama extends CutiSendiri {
+  sekolah_id: string | null;
+}
+
+const LAJUR_BERSAMA = 'id, sekolah_id, mula, tamat, nama, jenis, ikut_hari';
+
+/**
+ * Cuti bersama yang boleh dilihat akaun ini (peraturan pelayan menentukan barisnya).
+ * Salinan terakhir disimpan dalam telefon untuk kegunaan tanpa internet. Menulis memerlukan internet.
+ */
+export function useCutiBersama(uid: string | null, dalamTalian: boolean) {
+  const [cuti, setCuti] = useState<CutiBersama[]>([]);
+  const [sedia, setSedia] = useState(false);
+  const [ralat, setRalat] = useState<string | null>(null);
+  const kunci = uid ? `guru360.cuti_bersama.${uid}` : null;
+
+  const muat = useCallback(async () => {
+    if (!kunci) return;
+    const { data, error } = await supabase.from('cuti_bersama').select(LAJUR_BERSAMA);
+    if (error) return;
+    const baris = (data ?? []) as unknown as CutiBersama[];
+    tulisStoran(kunci, baris);
+    setCuti(baris);
+    setSedia(true);
+  }, [kunci]);
+
+  useEffect(() => {
+    if (!kunci) {
+      setCuti([]);
+      setSedia(false);
+      return;
+    }
+    const tempatan = bacaStoran<CutiBersama[]>(kunci);
+    setCuti(tempatan ?? []);
+    setSedia(tempatan !== null);
+    if (dalamTalian) void muat();
+  }, [kunci, dalamTalian, muat]);
+
+  /** Simpan rekod di bawah satu skop: id sekolah, atau null untuk semua sekolah. */
+  const simpan = useCallback(
+    async (skop: string | null, rekod: CutiSendiri[]) => {
+      if (!navigator.onLine) return setRalat('Tiada sambungan internet. Cuti bersama hanya boleh diubah apabila ada talian.');
+      setRalat(null);
+      const baharu = rekod.map((r) => ({ ...r, sekolah_id: skop }));
+      setCuti((lama) => [...lama.filter((c) => !baharu.some((b) => b.id === c.id)), ...baharu]);
+      const { error } = await supabase.from('cuti_bersama').upsert(baharu);
+      if (error) setRalat(terjemahRalat(error.message));
+      await muat();
+    },
+    [muat],
+  );
+
+  const padam = useCallback(
+    async (id: string) => {
+      if (!navigator.onLine) return setRalat('Tiada sambungan internet. Cuti bersama hanya boleh diubah apabila ada talian.');
+      setRalat(null);
+      setCuti((lama) => lama.filter((c) => c.id !== id));
+      const { error } = await supabase.from('cuti_bersama').delete().in('id', [id]);
+      if (error) setRalat(terjemahRalat(error.message));
+      await muat();
+    },
+    [muat],
+  );
+
+  return { cuti, sedia, ralat, simpan, padam };
 }
 
 // ---- Kalendar mengikut negeri ----

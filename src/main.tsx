@@ -5,7 +5,7 @@ import { NavBawah } from './components/Rangka';
 import { useProfil, useSesi } from './lib/akaun';
 import { useDalamTalian, useLaluan } from './lib/hooks';
 import { useJadual } from './lib/jadual';
-import { binaKalendar, useCutiSendiri } from './lib/kalendar';
+import { binaKalendar, useCutiBersama, useCutiSendiri } from './lib/kalendar';
 import { useDokumen } from './lib/dokumen';
 import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
@@ -52,7 +52,10 @@ function App() {
   const prog = useProgram(uidGuru, dalamTalian);
   const dok = useDokumen(uidGuru, dalamTalian);
   const negeri = profil?.negeri ?? null;
-  const kal = useMemo(() => binaKalendar(negeri, cutiSendiri.cuti), [negeri, cutiSendiri.cuti]);
+  // Cuti yang ditetapkan sekolah dan ibu pejabat digabung dengan cuti sendiri guru untuk kalendar dan RPH.
+  const bersama = useCutiBersama(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
+  const semuaCuti = useMemo(() => [...cutiSendiri.cuti, ...bersama.cuti], [cutiSendiri.cuti, bersama.cuti]);
+  const kal = useMemo(() => binaKalendar(negeri, semuaCuti), [negeri, semuaCuti]);
 
   const jalur = !dalamTalian && (
     <div className="jalur-talian" role="status">
@@ -119,6 +122,28 @@ function App() {
               belumHantar={belumHantar}
               simpan={simpan}
             />
+        ) : laluan === 'cuti' && param[0] === 'semua' && keahlian.ibuPejabat ? (
+          <Cuti
+            mod="semua"
+            negeri={null}
+            cuti={bersama.cuti.filter((c) => c.sekolah_id === null)}
+            sedia={bersama.sedia}
+            tertunda={false}
+            ralat={bersama.ralat}
+            simpanCuti={(c) => void bersama.simpan(null, c)}
+            padamCuti={(id) => void bersama.padam(id)}
+          />
+        ) : laluan === 'cuti' && adminAktif && keahlian.sekolah ? (
+          <Cuti
+            mod="sekolah"
+            negeri={keahlian.sekolah.negeri}
+            cuti={bersama.cuti.filter((c) => c.sekolah_id === keahlian.sekolah?.id)}
+            sedia={bersama.sedia}
+            tertunda={false}
+            ralat={bersama.ralat}
+            simpanCuti={(c) => void bersama.simpan(keahlian.sekolah?.id ?? null, c)}
+            padamCuti={(id) => void bersama.padam(id)}
+          />
         ) : laluan === 'templat' && adminAktif ? (
           <Templat
             profil={profil}
@@ -140,7 +165,7 @@ function App() {
     <div className="apl">
       {jalur}
       {laluan === 'utama' && <Utama profil={profil} sedia={sedia} kal={kal} waktu={jadual.waktu} rph={rph.rph} />}
-      {laluan === 'hariini' && <HariIni kal={kal} waktu={jadual.waktu} rph={rph.rph} cuti={cutiSendiri.cuti} program={prog.program} sedia={jadual.sedia} />}
+      {laluan === 'hariini' && <HariIni kal={kal} waktu={jadual.waktu} rph={rph.rph} cuti={semuaCuti} program={prog.program} sedia={jadual.sedia} />}
       {laluan === 'jadual' && <Jadual negeri={profil?.negeri ?? null} {...jadual} />}
       {laluan === 'rph' &&
         (() => {
@@ -179,7 +204,7 @@ function App() {
       {laluan === 'takwim' && (
         <Takwim
           negeri={profil?.negeri ?? null}
-          cuti={cutiSendiri.cuti}
+          cuti={semuaCuti}
           program={prog.program}
           programSedia={prog.sedia}
           programTertunda={prog.tertunda}
@@ -188,7 +213,7 @@ function App() {
           padamProgram={prog.padamProgram}
         />
       )}
-      {laluan === 'cuti' && <Cuti negeri={profil?.negeri ?? null} {...cutiSendiri} />}
+      {laluan === 'cuti' && <Cuti negeri={profil?.negeri ?? null} {...cutiSendiri} bersama={bersama.cuti} />}
       {laluan === 'profil' && (
         <Profil
           muatSemula={cubaLagi}

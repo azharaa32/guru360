@@ -335,6 +335,30 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula }: { keahli
           </a>
         )}
 
+        {keahlian.peranan === 'admin' && s?.status === 'aktif' && (
+          <a href="#/cuti" className="kad kad-pautan">
+            <span className="kad-pautan-teks">
+              <strong>Cuti sekolah</strong>
+              <span>Cuti peristiwa dan hari ganti untuk semua guru sekolah ini</span>
+            </span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
+
+        {keahlian.ibuPejabat && (
+          <a href="#/cuti/semua" className="kad kad-pautan">
+            <span className="kad-pautan-teks">
+              <strong>Cuti semua sekolah</strong>
+              <span>Ditetapkan ibu pejabat; muncul di takwim semua guru</span>
+            </span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
+
         {keahlian.peranan === 'admin' && s?.status === 'aktif' && <GuruSekolah dalamTalian={dalamTalian} muatSemula={muatSemula} />}
 
         {keahlian.ibuPejabat && <SenaraiMenunggu dalamTalian={dalamTalian} muatSemula={muatSemula} />}

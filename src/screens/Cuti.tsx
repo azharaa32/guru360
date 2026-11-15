@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { KepalaKembali } from '../components/Rangka';
 import { KALENDAR, TAHUN_ADA, kumpulan, type EntriKalendar } from '../data/kalendar';
 import { NAMA_HARI, hariSekolah } from '../lib/jadual';
-import { entriUntuk, hariIni, sesiTahun, tambahHari, tarikhMesra, type CutiSendiri } from '../lib/kalendar';
+import { entriUntuk, hariIni, sesiTahun, tambahHari, tarikhMesra, type CutiBersama, type CutiSendiri } from '../lib/kalendar';
 import { idBaharu } from '../lib/senarai';
 
 interface Props {
@@ -12,6 +12,11 @@ interface Props {
   tertunda: boolean;
   simpanCuti: (c: CutiSendiri[]) => void;
   padamCuti: (id: string) => void;
+  /** 'guru': cuti sendiri guru. 'sekolah': admin menetapkan untuk sekolahnya. 'semua': ibu pejabat menetapkan untuk semua sekolah. */
+  mod?: 'guru' | 'sekolah' | 'semua';
+  /** Guru sahaja: cuti yang ditetapkan sekolah dan ibu pejabat, untuk dibaca. */
+  bersama?: CutiBersama[];
+  ralat?: string | null;
 }
 
 interface Borang {
@@ -36,7 +41,8 @@ function Baris({ e }: { e: { nama: string; mula: string; tamat?: string; semak?:
   );
 }
 
-export function Cuti({ negeri, cuti, sedia, tertunda, simpanCuti, padamCuti }: Props) {
+export function Cuti({ negeri, cuti, sedia, tertunda, simpanCuti, padamCuti, mod = 'guru', bersama = [], ralat = null }: Props) {
+  const ditetapkan = bersama;
   const tahunKini = Number(hariIni().slice(0, 4));
   const [tahun, setTahun] = useState(() => (TAHUN_ADA.includes(tahunKini + 1) && new Date().getMonth() >= 9 ? tahunKini + 1 : tahunKini));
   const kosong = (): Borang => ({ jenis: 'cuti', nama: '', mula: hariIni(), tamat: hariIni(), ikut_hari: '1' });
@@ -126,9 +132,13 @@ export function Cuti({ negeri, cuti, sedia, tertunda, simpanCuti, padamCuti }: P
 
   return (
     <>
-      <KepalaKembali ke="#/takwim" labelKembali="Kembali ke Takwim" tajuk="Cuti & Kalendar KPM" sub={`Sesi akademik ${tahun}`} />
+      {mod === 'guru' ? (
+        <KepalaKembali ke="#/takwim" labelKembali="Kembali ke Takwim" tajuk="Cuti & Kalendar KPM" sub={`Sesi akademik ${tahun}`} />
+      ) : (
+        <KepalaKembali ke="#/" labelKembali="Kembali ke Pengurusan" tajuk={mod === 'sekolah' ? 'Cuti sekolah' : 'Cuti semua sekolah'} sub={mod === 'sekolah' ? 'Untuk semua guru sekolah ini' : 'Ditetapkan ibu pejabat untuk semua sekolah'} />
+      )}
       <main className="isi">
-        {negeri ? (
+        {mod !== 'guru' ? null : negeri ? (
           <a href="#/profil" className="kad kad-pautan">
             <span className="kad-pautan-teks">
               <strong>
@@ -209,9 +219,36 @@ export function Cuti({ negeri, cuti, sedia, tertunda, simpanCuti, padamCuti }: P
           </section>
         )}
 
+        {mod === 'guru' && ditetapkan.filter(dalamTahun).length > 0 && (
+          <section className="kad kad-senarai kad-garis-hijau" aria-labelledby="tajuk-bersama">
+            <div className="kad-kepala">
+              <h2 id="tajuk-bersama">Ditetapkan sekolah dan ibu pejabat</h2>
+            </div>
+            <ul>
+              {ditetapkan
+                .filter(dalamTahun)
+                .sort((a, b) => a.mula.localeCompare(b.mula))
+                .map((c) => (
+                  <li key={c.id} className="baris-cuti">
+                    <span>
+                      <span className={`pil ${c.jenis === 'cuti' ? 'pil-emas' : 'pil-rph'}`}>{c.jenis === 'cuti' ? 'Cuti' : 'Ganti'}</span> {c.nama}
+                      <span className="bantuan">
+                        {' '}
+                        · {c.sekolah_id ? 'sekolah' : 'ibu pejabat'}
+                        {c.jenis === 'sekolah' && c.ikut_hari != null ? ` · jadual ${NAMA_HARI[c.ikut_hari]}` : ''}
+                      </span>
+                    </span>
+                    <span className="mono">{tarikhMesra(c.mula, c.tamat)}</span>
+                  </li>
+                ))}
+            </ul>
+            <p className="senarai-kosong">Cuti ini sama untuk semua guru dan tidak boleh diubah di sini.</p>
+          </section>
+        )}
+
         <section className="kad kad-senarai kad-garis-emas" aria-labelledby="tajuk-sendiri">
           <div className="kad-kepala">
-            <h2 id="tajuk-sendiri">Cuti sekolah saya</h2>
+            <h2 id="tajuk-sendiri">{mod === 'guru' ? 'Cuti sekolah saya' : mod === 'sekolah' ? 'Cuti dan hari ganti sekolah' : 'Cuti dan hari ganti semua sekolah'}</h2>
             {sedia && tertunda && (
               <span className="lencana lencana-menyemak" role="status">
                 Menunggu internet
@@ -235,7 +272,14 @@ export function Cuti({ negeri, cuti, sedia, tertunda, simpanCuti, padamCuti }: P
           ) : (
             <p className="senarai-kosong">Belum ada cuti peristiwa atau hari ganti bagi {tahun}.</p>
           )}
-          <div aria-live="polite">{mesej && !borang && <p className={`mesej mesej-${mesej.jenis} mesej-dalam`}>{mesej.teks}</p>}</div>
+          <div aria-live="polite">
+            {mesej && !borang && !ralat && <p className={`mesej mesej-${mesej.jenis} mesej-dalam`}>{mesej.teks}</p>}
+            {ralat && (
+              <p className="mesej mesej-ralat mesej-dalam" role="alert">
+                {ralat}
+              </p>
+            )}
+          </div>
           {!borang && (
             <div className="kad-kaki">
               <button type="button" className="butang butang-putus" onClick={() => buka()}>
