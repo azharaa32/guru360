@@ -8,6 +8,17 @@ export const ralatPautan: string | null = param.get('error_description');
 export const pautanJemputan = param.get('type') === 'invite' && !ralatPautan;
 if (ralatPautan) window.history.replaceState(null, '', window.location.pathname);
 
+/**
+ * Pautan emel yang membawa kod sekali guna (?token_hash=...&type=invite|recovery).
+ * Kod hanya ditukar menjadi sesi apabila pengguna menekan butang, supaya pengimbas emel
+ * yang membuka pautan terlebih dahulu tidak menghanguskannya.
+ */
+const carian = new URLSearchParams(window.location.search);
+const jenisPautan = carian.get('type');
+export const pautanEmel: { tokenHash: string; jenis: 'invite' | 'recovery' } | null =
+  carian.get('token_hash') && (jenisPautan === 'invite' || jenisPautan === 'recovery') ? { tokenHash: carian.get('token_hash')!, jenis: jenisPautan } : null;
+export const buangPautanEmel = () => window.history.replaceState(null, '', window.location.pathname);
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,

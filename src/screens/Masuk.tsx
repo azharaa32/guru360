@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { daftarSekolah } from '../lib/sekolah';
-import { alamatAplikasi, ralatPautan, supabase, terjemahRalat } from '../lib/supabase';
+import { alamatAplikasi, buangPautanEmel, ralatPautan, supabase, terjemahRalat } from '../lib/supabase';
 import { DaftarSekolah } from './DaftarSekolah';
 
 type Mod = 'masuk' | 'daftar' | 'lupa';
@@ -225,6 +225,66 @@ export function KataLaluanBaharu({ selesai }: { selesai: () => void }) {
           {sibuk ? 'Sebentar…' : 'Simpan kata laluan'}
         </button>
       </form>
+    </Jenama>
+  );
+}
+
+/** Pautan daripada emel jemputan atau set semula kata laluan: kod ditukar menjadi sesi hanya apabila butang ditekan. */
+export function TerimaPautan({ pautan, berjaya, tutup }: { pautan: { tokenHash: string; jenis: 'invite' | 'recovery' }; berjaya: () => void; tutup: () => void }) {
+  const [sibuk, setSibuk] = useState(false);
+  const [ralat, setRalat] = useState<string | null>(null);
+  const jemputan = pautan.jenis === 'invite';
+  const teruskan = async () => {
+    setSibuk(true);
+    setRalat(null);
+    try {
+      const { error } = await supabase.auth.verifyOtp({ token_hash: pautan.tokenHash, type: pautan.jenis });
+      if (error) {
+        setRalat(
+          /fetch|network/i.test(error.message)
+            ? terjemahRalat(error.message)
+            : jemputan
+              ? 'Pautan jemputan ini sudah luput atau sudah digunakan. Minta admin sekolah menghantar semula jemputan.'
+              : 'Pautan ini sudah luput atau sudah digunakan. Minta pautan baharu melalui "Lupa kata laluan".',
+        );
+        setSibuk(false);
+        return;
+      }
+      buangPautanEmel();
+      berjaya();
+    } catch (e) {
+      setRalat(terjemahRalat(e instanceof Error ? e.message : null));
+      setSibuk(false);
+    }
+  };
+  return (
+    <Jenama>
+      <div className="kad borang">
+        <h2>{jemputan ? 'Jemputan Guru360' : 'Set semula kata laluan'}</h2>
+        <p>{jemputan ? 'Anda dijemput menyertai Guru360. Tekan butang di bawah, kemudian tetapkan kata laluan anda.' : 'Tekan butang di bawah, kemudian tetapkan kata laluan baharu.'}</p>
+        <div aria-live="polite">
+          {ralat && (
+            <p className="mesej mesej-ralat" role="alert">
+              {ralat}
+            </p>
+          )}
+        </div>
+        <button type="button" className="butang butang-utama" disabled={sibuk} onClick={() => void teruskan()}>
+          {sibuk ? 'Sebentar…' : jemputan ? 'Terima jemputan' : 'Teruskan'}
+        </button>
+        {ralat && (
+          <button
+            type="button"
+            className="butang butang-garis"
+            onClick={() => {
+              buangPautanEmel();
+              tutup();
+            }}
+          >
+            Ke log masuk
+          </button>
+        )}
+      </div>
     </Jenama>
   );
 }

@@ -25,7 +25,7 @@ const perluTetapKata = () => {
 export type KeadaanSesi = { status: 'memuat' } | { status: 'tiada' } | { status: 'ada'; sesi: Session };
 
 /** Sesi log masuk. Disimpan dalam telefon, jadi guru kekal log masuk walaupun tanpa internet. */
-export function useSesi(): { keadaan: KeadaanSesi; pemulihan: boolean; tamatPemulihan: () => void } {
+export function useSesi(): { keadaan: KeadaanSesi; pemulihan: boolean; mulaTetapKata: () => void; tamatPemulihan: () => void } {
   const [keadaan, setKeadaan] = useState<KeadaanSesi>({ status: 'memuat' });
   const [pemulihan, setPemulihan] = useState(perluTetapKata);
   useEffect(() => {
@@ -51,6 +51,10 @@ export function useSesi(): { keadaan: KeadaanSesi; pemulihan: boolean; tamatPemu
   return {
     keadaan,
     pemulihan,
+    mulaTetapKata: () => {
+      ingatTetapKata(true);
+      setPemulihan(true);
+    },
     tamatPemulihan: () => {
       ingatTetapKata(false);
       setPemulihan(false);

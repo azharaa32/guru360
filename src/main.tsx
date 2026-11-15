@@ -1,4 +1,4 @@
-import { StrictMode, useMemo } from 'react';
+import { StrictMode, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Ikon } from './components/Ikon';
 import { NavBawah } from './components/Rangka';
@@ -10,6 +10,7 @@ import { useDokumen } from './lib/dokumen';
 import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
 import { useKeahlian } from './lib/sekolah';
+import { pautanEmel } from './lib/supabase';
 import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
 import { Pengurusan, TiadaSekolah } from './screens/Sekolah';
@@ -20,7 +21,7 @@ import { JobskopEdit, JobskopPilih, JobskopUtama } from './screens/Jobskop';
 import { HariIni } from './screens/HariIni';
 import { Jadual } from './screens/Jadual';
 import { KertasEdit, KertasSenarai } from './screens/KertasKerja';
-import { KataLaluanBaharu, Masuk, Memuat } from './screens/Masuk';
+import { KataLaluanBaharu, Masuk, Memuat, TerimaPautan } from './screens/Masuk';
 import { RphEdit, RphMinggu } from './screens/Rph';
 import { MinitEdit, MinitSenarai } from './screens/Minit';
 import { OprEdit, OprSenarai } from './screens/Opr';
@@ -32,7 +33,8 @@ import './theme.css';
 function App() {
   const { nama: laluan, param } = useLaluan();
   const dalamTalian = useDalamTalian();
-  const { keadaan, pemulihan, tamatPemulihan } = useSesi();
+  const { keadaan, pemulihan, mulaTetapKata, tamatPemulihan } = useSesi();
+  const [pautan, setPautan] = useState(pautanEmel);
   const sesi = keadaan.status === 'ada' ? keadaan.sesi : null;
   const uid = sesi?.user.id ?? null;
   const { keahlian, sedia: keahlianSedia, ralat: ralatKeahlian, cubaLagi } = useKeahlian(uid, dalamTalian);
@@ -58,6 +60,20 @@ function App() {
   );
 
   if (keadaan.status === 'memuat') return <Memuat />;
+  if (pautan)
+    return (
+      <div className="apl">
+        {jalur}
+        <TerimaPautan
+          pautan={pautan}
+          berjaya={() => {
+            mulaTetapKata();
+            setPautan(null);
+          }}
+          tutup={() => setPautan(null)}
+        />
+      </div>
+    );
   if (!sesi)
     return (
       <div className="apl">
