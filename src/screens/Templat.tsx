@@ -21,6 +21,8 @@ interface Props {
   logo: Logo;
   simpan: (t: DataTemplat) => Promise<HasilSimpan>;
   tetapLogo: (sisi: Sisi, dataUrl: string | null) => Promise<HasilSimpan>;
+  /** Admin sekolah boleh mengubah; guru hanya melihat. */
+  bolehUbah: boolean;
 }
 
 function PetakLogo({ sisi, nombor, gambar, tetapLogo, lapor }: { sisi: Sisi; nombor: number; gambar: string | null; tetapLogo: Props['tetapLogo']; lapor: (m: string | null) => void }) {
@@ -68,7 +70,7 @@ function PetakLogo({ sisi, nombor, gambar, tetapLogo, lapor }: { sisi: Sisi; nom
   );
 }
 
-export function Templat({ profil, templat, sedia, belumHantar, logo, simpan, tetapLogo }: Props) {
+export function Templat({ profil, templat, sedia, belumHantar, logo, simpan, tetapLogo, bolehUbah }: Props) {
   const asal = (): Teks => {
     const t = templat ?? TEMPLAT_KOSONG;
     return {
@@ -159,22 +161,29 @@ export function Templat({ profil, templat, sedia, belumHantar, logo, simpan, tet
     }
   };
 
-  const pratonton = kemas();
+  const pratonton = bolehUbah ? kemas() : { ...asal(), nama_sekolah: (templat?.nama_sekolah || profil?.sekolah || '').toUpperCase() };
 
   return (
     <>
       <header className="kepala kepala-kembali">
-        <a href="#/profil" className="butang-kembali" aria-label="Kembali ke Profil">
+        <a href={bolehUbah ? '#/' : '#/profil'} className="butang-kembali" aria-label={bolehUbah ? 'Kembali ke Pengurusan' : 'Kembali ke Profil'}>
           <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </a>
         <div className="kepala-teks">
-          <h1>Templat sekolah saya</h1>
-          <span className="kepala-kecil">Dipakai pada semua dokumen yang dijana</span>
+          <h1>{bolehUbah ? 'Kepala surat dan logo' : 'Templat sekolah saya'}</h1>
+          <span className="kepala-kecil">{bolehUbah ? 'Dipakai pada dokumen semua guru sekolah ini' : 'Dipakai pada semua dokumen yang dijana'}</span>
         </div>
       </header>
       <main className="isi">
+        {!bolehUbah && (
+          <p className="mesej mesej-tunggu">
+            Kepala surat dan logo ditetapkan oleh admin sekolah dan sama untuk semua guru. {!sedia ? 'Memuat templat…' : !templat?.nama_sekolah ? 'Admin sekolah belum mengisinya; minta admin lengkapkan.' : ''}
+          </p>
+        )}
+        {bolehUbah && (
+          <>
         <section className="kad" aria-labelledby="tajuk-logo">
           <h2 id="tajuk-logo">Logo</h2>
           <p>Satu atau dua logo, contohnya logo sekolah dan logo KPM. Kedua-duanya pilihan.</p>
@@ -231,6 +240,8 @@ export function Templat({ profil, templat, sedia, belumHantar, logo, simpan, tet
             {sibuk ? 'Menyimpan…' : 'Simpan templat'}
           </button>
         </form>
+          </>
+        )}
 
         <section className="kad" aria-labelledby="tajuk-pratonton">
           <h2 id="tajuk-pratonton">Pratonton kepala surat</h2>

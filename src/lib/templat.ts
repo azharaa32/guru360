@@ -70,12 +70,13 @@ function blobKeDataUrl(blob: Blob): Promise<string> {
 }
 
 /**
- * Templat sekolah: teks kepala surat dalam jadual `templat`, logo dalam simpanan fail peribadi.
+ * Templat sekolah, dikongsi satu sekolah: teks kepala surat dalam jadual `templat_sekolah` (id = id sekolah),
+ * logo dalam simpanan fail di bawah folder bernama id sekolah. Admin sekolah menulis; guru membaca sahaja.
  * Logo juga disimpan dalam telefon supaya PDF boleh dijana tanpa internet.
  */
 export function useTemplat(uid: string | null, dalamTalian: boolean) {
   const { data, sedia, belumHantar, simpan } = useBarisSendiri<Templat>(
-    'templat',
+    'templat_sekolah',
     'nama_sekolah, alamat, telefon, emel, kod_sekolah, logo_kiri, logo_kanan',
     uid,
     dalamTalian,

@@ -45,7 +45,9 @@ function App() {
   const { profil, sedia, belumHantar, simpan } = useProfil(uid, dalamTalian);
   const jadual = useJadual(uidGuru, dalamTalian);
   const cutiSendiri = useCutiSendiri(uidGuru, dalamTalian);
-  const templat = useTemplat(uidGuru, dalamTalian);
+  // Kepala surat dikongsi satu sekolah: guru membacanya, admin sekolah menetapkannya.
+  const adminAktif = keahlian.peranan === 'admin' && keahlian.sekolah?.status === 'aktif';
+  const templat = useTemplat(uid && (mengajar || adminAktif) ? (keahlian.sekolah?.id ?? null) : null, dalamTalian);
   const rph = useRph(uidGuru, dalamTalian);
   const prog = useProgram(uidGuru, dalamTalian);
   const dok = useDokumen(uidGuru, dalamTalian);
@@ -117,6 +119,17 @@ function App() {
               belumHantar={belumHantar}
               simpan={simpan}
             />
+        ) : laluan === 'templat' && adminAktif ? (
+          <Templat
+            profil={profil}
+            templat={templat.templat}
+            sedia={templat.sedia}
+            belumHantar={templat.belumHantar}
+            logo={templat.logo}
+            simpan={templat.simpan}
+            tetapLogo={templat.tetapLogo}
+            bolehUbah
+          />
         ) : (
           <Pengurusan keahlian={keahlian} nama={profil?.nama ?? ''} dalamTalian={dalamTalian} muatSemula={cubaLagi} />
         )}
@@ -199,6 +212,7 @@ function App() {
           logo={templat.logo}
           simpan={templat.simpan}
           tetapLogo={templat.tetapLogo}
+          bolehUbah={false}
         />
       )}
       <NavBawah aktif={laluan} />
