@@ -8,14 +8,14 @@ const tab: { id: 'utama' | 'takwim' | 'profil'; label: string; href: string }[] 
   { id: 'profil', label: 'Profil', href: '#/profil' },
 ];
 
-export function NavBawah({ aktif: laluan }: { aktif: Laluan }) {
+export function NavBawah({ aktif: laluan, pengurusan = false }: { aktif: Laluan; pengurusan?: boolean }) {
   const aktif = laluan === 'templat' || laluan === 'panduan' ? 'profil' : laluan === 'jadual' || laluan === 'rph' || laluan === 'hariini' || laluan === 'kertas' || laluan === 'surat' || laluan === 'minit' || laluan === 'opr' || laluan === 'jobskop' ? 'utama' : laluan === 'cuti' ? 'takwim' : laluan;
   return (
     <nav className="nav-bawah" aria-label="Navigasi utama">
-      {tab.map((t) => (
+      {(pengurusan ? tab.filter((t) => t.id !== 'takwim') : tab).map((t) => (
         <a key={t.id} href={t.href} className="nav-tab" aria-current={t.id === aktif ? 'page' : undefined}>
           <Ikon nama={t.id} />
-          {t.label}
+          {pengurusan && t.id === 'utama' ? 'Pengurusan' : t.label}
         </a>
       ))}
     </nav>

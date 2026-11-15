@@ -9,8 +9,10 @@ import { binaKalendar, useCutiSendiri } from './lib/kalendar';
 import { useDokumen } from './lib/dokumen';
 import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
+import { useKeahlian } from './lib/sekolah';
 import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
+import { Pengurusan, TiadaSekolah } from './screens/Sekolah';
 import { Panduan } from './screens/Panduan';
 import { Takwim } from './screens/Takwim';
 import { Cuti } from './screens/Cuti';
@@ -32,13 +34,19 @@ function App() {
   const dalamTalian = useDalamTalian();
   const { keadaan, pemulihan, tamatPemulihan } = useSesi();
   const sesi = keadaan.status === 'ada' ? keadaan.sesi : null;
-  const { profil, sedia, belumHantar, simpan } = useProfil(sesi?.user.id ?? null, dalamTalian);
-  const jadual = useJadual(sesi?.user.id ?? null, dalamTalian);
-  const cutiSendiri = useCutiSendiri(sesi?.user.id ?? null, dalamTalian);
-  const templat = useTemplat(sesi?.user.id ?? null, dalamTalian);
-  const rph = useRph(sesi?.user.id ?? null, dalamTalian);
-  const prog = useProgram(sesi?.user.id ?? null, dalamTalian);
-  const dok = useDokumen(sesi?.user.id ?? null, dalamTalian);
+  const uid = sesi?.user.id ?? null;
+  const { keahlian, sedia: keahlianSedia, ralat: ralatKeahlian, cubaLagi } = useKeahlian(uid, dalamTalian);
+  // Hanya guru aktif di sekolah yang diluluskan memakai modul mengajar; akaun pengurusan tidak memuat data guru.
+  const mengajar = keahlian.peranan === 'guru' && keahlian.sekolah?.status === 'aktif';
+  const pengurusan = keahlian.ibuPejabat || keahlian.peranan === 'admin';
+  const uidGuru = mengajar ? uid : null;
+  const { profil, sedia, belumHantar, simpan } = useProfil(uid, dalamTalian);
+  const jadual = useJadual(uidGuru, dalamTalian);
+  const cutiSendiri = useCutiSendiri(uidGuru, dalamTalian);
+  const templat = useTemplat(uidGuru, dalamTalian);
+  const rph = useRph(uidGuru, dalamTalian);
+  const prog = useProgram(uidGuru, dalamTalian);
+  const dok = useDokumen(uidGuru, dalamTalian);
   const negeri = profil?.negeri ?? null;
   const kal = useMemo(() => binaKalendar(negeri, cutiSendiri.cuti), [negeri, cutiSendiri.cuti]);
 
@@ -62,6 +70,40 @@ function App() {
       <div className="apl">
         {jalur}
         <KataLaluanBaharu selesai={tamatPemulihan} />
+      </div>
+    );
+  if (!keahlianSedia && !ralatKeahlian) return <Memuat />;
+  if (!mengajar && !pengurusan)
+    return (
+      <div className="apl">
+        {jalur}
+        <TiadaSekolah
+          emel={sesi.user.email ?? ''}
+          sebab={keahlian.sekolah?.status === 'menunggu' ? 'menunggu' : keahlian.sekolah?.status === 'ditolak' ? 'ditolak' : 'tiada'}
+          ralat={keahlianSedia ? null : ralatKeahlian}
+          cubaLagi={cubaLagi}
+        />
+      </div>
+    );
+  if (!mengajar)
+    return (
+      <div className="apl">
+        {jalur}
+        {laluan === 'profil' ? (
+            <Profil
+              uid={sesi.user.id}
+              keahlian={keahlian}
+              dalamTalian={dalamTalian}
+              emel={sesi.user.email ?? ''}
+              profil={profil}
+              sedia={sedia}
+              belumHantar={belumHantar}
+              simpan={simpan}
+            />
+        ) : (
+          <Pengurusan keahlian={keahlian} nama={profil?.nama ?? ''} />
+        )}
+        <NavBawah aktif={laluan === 'profil' ? 'profil' : 'utama'} pengurusan />
       </div>
     );
   return (
@@ -120,6 +162,7 @@ function App() {
       {laluan === 'profil' && (
         <Profil
           uid={sesi.user.id}
+          keahlian={keahlian}
           dalamTalian={dalamTalian}
           emel={sesi.user.email ?? ''}
           profil={profil}

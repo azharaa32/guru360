@@ -28,25 +28,3 @@ export async function muatTurunData(uid: string, emel: string): Promise<Blob> {
   data.fail = await senaraiFail(uid);
   return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 }
-
-function buangSetempat(uid: string) {
-  try {
-    for (const k of Object.keys(localStorage)) if (k.startsWith('guru360.') && k.endsWith(`.${uid}`)) localStorage.removeItem(k);
-    indexedDB.deleteDatabase('guru360');
-  } catch {
-    // Storan telefon tidak boleh dicapai; data pelayan tetap sudah dipadam.
-  }
-}
-
-/** Padam fail, kemudian akaun dan semua barisnya di pelayan, kemudian salinan dalam telefon ini. */
-export async function padamAkaun(uid: string): Promise<void> {
-  const fail = await senaraiFail(uid);
-  if (fail.length) {
-    const { error } = await supabase.storage.from(BALDI).remove(fail);
-    if (error) throw new Error(terjemahRalat(error.message));
-  }
-  const { error } = await supabase.rpc('padam_akaun');
-  if (error) throw new Error(terjemahRalat(error.message));
-  buangSetempat(uid);
-  await supabase.auth.signOut({ scope: 'local' });
-}

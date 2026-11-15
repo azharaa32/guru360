@@ -3,7 +3,8 @@ import { Kepala } from '../components/Rangka';
 import { NEGERI, PROFIL_KOSONG, type HasilSimpan, type Profil as DataProfil } from '../lib/akaun';
 import { APP_VERSION } from '../lib/config';
 import { sudahDipasang, usePelayan, type StatusPelayan } from '../lib/hooks';
-import { muatTurunData, padamAkaun } from '../lib/dataSaya';
+import { muatTurunData } from '../lib/dataSaya';
+import { NAMA_STATUS, namaPeranan, type Keahlian } from '../lib/sekolah';
 import { supabase } from '../lib/supabase';
 
 const teksPelayan: Record<StatusPelayan, string> = {
@@ -17,6 +18,7 @@ const kemas = (s: string) => s.trim().replace(/\s+/g, ' ').toUpperCase();
 
 interface PropsProfil {
   uid: string;
+  keahlian: Keahlian;
   dalamTalian: boolean;
   emel: string;
   profil: DataProfil | null;
@@ -25,16 +27,14 @@ interface PropsProfil {
   simpan: (p: DataProfil) => Promise<HasilSimpan>;
 }
 
-export function Profil({ uid, dalamTalian, emel, profil, sedia, belumHantar, simpan }: PropsProfil) {
+export function Profil({ uid, keahlian, dalamTalian, emel, profil, sedia, belumHantar, simpan }: PropsProfil) {
   const { status, semak } = usePelayan(dalamTalian);
   const [borang, setBorang] = useState<DataProfil>(profil ?? PROFIL_KOSONG);
   const [disentuh, setDisentuh] = useState(false);
   const [sibuk, setSibuk] = useState(false);
   const [hasil, setHasil] = useState<HasilSimpan | null>(null);
   const [sahKeluar, setSahKeluar] = useState(false);
-  const [sahPadam, setSahPadam] = useState(false);
-  const [taip, setTaip] = useState('');
-  const [kerja, setKerja] = useState<'muat' | 'padam' | null>(null);
+  const [kerja, setKerja] = useState<'muat' | null>(null);
   const [ralatData, setRalatData] = useState<string | null>(null);
   const [salinan, setSalinan] = useState<string | null>(null);
 
@@ -49,17 +49,6 @@ export function Profil({ uid, dalamTalian, emel, profil, sedia, belumHantar, sim
       setRalatData(e instanceof Error ? e.message : 'Data tidak dapat dimuat turun. Cuba lagi.');
     }
     setKerja(null);
-  };
-
-  const padam = async () => {
-    setKerja('padam');
-    setRalatData(null);
-    try {
-      await padamAkaun(uid);
-    } catch (e) {
-      setRalatData(e instanceof Error ? e.message : 'Akaun tidak dapat dipadam. Cuba lagi.');
-      setKerja(null);
-    }
   };
 
   // Isi borang apabila profil sampai dari pelayan, selagi guru belum mula menaip.
@@ -170,25 +159,57 @@ export function Profil({ uid, dalamTalian, emel, profil, sedia, belumHantar, sim
           </button>
         </form>
 
-        <a href="#/templat" className="kad kad-pautan">
-          <span className="kad-pautan-teks">
-            <strong>Templat sekolah saya</strong>
-            <span>Kepala surat dan logo untuk semua dokumen</span>
-          </span>
-          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </a>
+        <section className="kad" aria-labelledby="tajuk-sekolah">
+          <h2 id="tajuk-sekolah" className="kad-tajuk">
+            Sekolah dan peranan
+          </h2>
+          <dl className="senarai">
+            <div>
+              <dt>Peranan</dt>
+              <dd>{namaPeranan(keahlian)}</dd>
+            </div>
+            {keahlian.sekolah && (
+              <>
+                <div>
+                  <dt>Sekolah</dt>
+                  <dd className="kanan">{keahlian.sekolah.nama}</dd>
+                </div>
+                <div>
+                  <dt>Kod sekolah</dt>
+                  <dd className="mono">{keahlian.sekolah.kod}</dd>
+                </div>
+                <div>
+                  <dt>Status sekolah</dt>
+                  <dd>{NAMA_STATUS[keahlian.sekolah.status]}</dd>
+                </div>
+              </>
+            )}
+          </dl>
+        </section>
 
-        <a href="#/panduan" className="kad kad-pautan">
-          <span className="kad-pautan-teks">
-            <strong>Panduan ringkas</strong>
-            <span>Cara mula dan cara guna setiap modul</span>
-          </span>
-          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </a>
+        {keahlian.peranan === 'guru' && (
+          <>
+            <a href="#/templat" className="kad kad-pautan">
+              <span className="kad-pautan-teks">
+                <strong>Templat sekolah saya</strong>
+                <span>Kepala surat dan logo untuk semua dokumen</span>
+              </span>
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </a>
+
+            <a href="#/panduan" className="kad kad-pautan">
+              <span className="kad-pautan-teks">
+                <strong>Panduan ringkas</strong>
+                <span>Cara mula dan cara guna setiap modul</span>
+              </span>
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </a>
+          </>
+        )}
 
         <section className="kad" aria-labelledby="tajuk-tentang">
           <h2 id="tajuk-tentang" className="kad-tajuk">
@@ -223,7 +244,7 @@ export function Profil({ uid, dalamTalian, emel, profil, sedia, belumHantar, sim
           <h2 id="tajuk-data" className="kad-tajuk">
             Data saya
           </h2>
-          <p>Data anda hanya boleh dibaca oleh akaun anda sendiri.</p>
+          <p>Data yang anda isi disimpan di bawah sekolah anda dan kekal dengan sekolah itu.</p>
           <button type="button" className="butang butang-garis" disabled={!dalamTalian || kerja !== null} onClick={muatTurun}>
             {kerja === 'muat' ? 'Menyediakan…' : 'Muat turun data saya'}
           </button>
@@ -232,38 +253,7 @@ export function Profil({ uid, dalamTalian, emel, profil, sedia, belumHantar, sim
               Simpan fail (JSON)
             </a>
           )}
-          {sahPadam ? (
-            <>
-              <p>
-                <strong>Padam akaun dan semua data?</strong> Profil, jadual, RPH, takwim, dokumen, logo dan gambar akan dipadam dari pelayan dan telefon ini. Ia tidak boleh dikembalikan.
-              </p>
-              <div className="medan">
-                <label htmlFor="padam-taip">Taip PADAM untuk sahkan</label>
-                <input id="padam-taip" className="besar" value={taip} autoCapitalize="characters" autoComplete="off" onChange={(e) => setTaip(e.target.value)} />
-              </div>
-              <div className="dua-butang">
-                <button
-                  type="button"
-                  className="butang butang-garis"
-                  disabled={kerja === 'padam'}
-                  onClick={() => {
-                    setSahPadam(false);
-                    setTaip('');
-                  }}
-                >
-                  Jangan padam
-                </button>
-                <button type="button" className="butang butang-bahaya" disabled={taip.trim().toUpperCase() !== 'PADAM' || !dalamTalian || kerja !== null} onClick={padam}>
-                  {kerja === 'padam' ? 'Memadam…' : 'Padam akaun'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <button type="button" className="butang butang-garis teks-bahaya" disabled={!dalamTalian || kerja !== null} onClick={() => setSahPadam(true)}>
-              Padam akaun saya
-            </button>
-          )}
-          {!dalamTalian && <p className="bantuan">Perlu internet untuk muat turun data atau padam akaun.</p>}
+          {!dalamTalian && <p className="bantuan">Perlu internet untuk muat turun data.</p>}
           {ralatData && (
             <p className="mesej mesej-ralat" role="alert">
               {ralatData}
