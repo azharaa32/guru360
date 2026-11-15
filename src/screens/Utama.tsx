@@ -218,6 +218,9 @@ export function Utama({ profil, sedia, kal, waktu, rph }: Props) {
           </section>
         )}
         <KadPasang />
+        <a href="#/panduan" className="butang butang-garis">
+          Panduan ringkas
+        </a>
         <section className="bahagian" aria-labelledby="tajuk-modul">
           <h2 id="tajuk-modul" className="label-bahagian">
             MODUL

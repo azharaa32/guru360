@@ -11,6 +11,7 @@ import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
 import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
+import { Panduan } from './screens/Panduan';
 import { Takwim } from './screens/Takwim';
 import { Cuti } from './screens/Cuti';
 import { JobskopEdit, JobskopPilih, JobskopUtama } from './screens/Jobskop';
@@ -126,6 +127,7 @@ function App() {
           simpan={simpan}
         />
       )}
+      {laluan === 'panduan' && <Panduan />}
       {laluan === 'templat' && (
         <Templat
           profil={profil}

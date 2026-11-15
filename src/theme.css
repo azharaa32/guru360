@@ -2222,3 +2222,43 @@ a.acara-butang {
 .baris-tugas .penanda {
   padding-top: 10px;
 }
+
+/* Panduan */
+.panduan-langkah,
+.panduan-nota {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panduan-langkah li {
+  display: flex;
+  gap: 12px;
+}
+
+.panduan-teks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.panduan-teks a {
+  color: var(--hijau);
+  font-weight: 600;
+  padding: 8px 0;
+}
+
+.panduan-nota li {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.panduan-modul a span:first-child {
+  font-weight: 400;
+  line-height: 1.5;
+}
