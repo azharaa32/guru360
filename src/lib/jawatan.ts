@@ -40,3 +40,9 @@ export function useJawatanSaya(uid: string | null, dalamTalian: boolean): Jawata
   }, [uid, dalamTalian]);
   return senarai;
 }
+
+/** Adakah jawatan dalam jobskop guru sepadan dengan jawatan yang ditetapkan atau disahkan admin? */
+export function padanJawatan(d: Pick<JawatanDitetapkan, 'kod' | 'nama' | 'butiran'>, j: { kod: string; nama: string; butiran: string }): boolean {
+  const sama = (a: string, b: string) => a.trim().toUpperCase() === b.trim().toUpperCase();
+  return (d.kod ? j.kod === d.kod : sama(j.nama, d.nama)) && (!d.butiran || sama(j.butiran, d.butiran));
+}

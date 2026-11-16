@@ -5,7 +5,7 @@ import type { Profil } from '../lib/akaun';
 import { useSimpanAuto } from '../lib/auto';
 import type { Dokumen } from '../lib/dokumen';
 import { NAMA_JENIS, bilTugas, dariMysg, isiJobskop, jobskopKosong, kemasJawatan, muatMysg, namaPenuh, type DataMysg, type IsiJobskop, type Jawatan, type JenisPortfolio, type PortfolioMysg } from '../lib/jobskop';
-import type { JawatanDitetapkan } from '../lib/jawatan';
+import { padanJawatan, type JawatanDitetapkan } from '../lib/jawatan';
 import type { KepalaSurat } from '../lib/pdf';
 import { TEMPLAT_KOSONG, type Logo, type Templat } from '../lib/templat';
 
@@ -57,7 +57,8 @@ export function JobskopUtama(p: Asas) {
 
   // Jawatan yang ditetapkan admin bagi tahun jobskop ini, dan sama ada ia sudah dimasukkan.
   const ditetapkan = (p.ditetapkan ?? []).filter((d) => d.tahun === isi.tahun);
-  const sudahAda = (d: JawatanDitetapkan) => isi.jawatan.some((j) => (d.kod ? j.kod === d.kod : j.nama.toUpperCase() === d.nama.toUpperCase()) && (!d.butiran || j.butiran.toUpperCase() === d.butiran.toUpperCase()));
+  const sudahAda = (d: JawatanDitetapkan) => isi.jawatan.some((j) => padanJawatan(d, j));
+  const disahkan = (j: Jawatan) => ditetapkan.some((d) => padanJawatan(d, j));
   const [menambah, setMenambah] = useState<string | null>(null);
   const tambahDitetapkan = async (d: JawatanDitetapkan) => {
     setMenambah(d.id);
@@ -92,7 +93,7 @@ export function JobskopUtama(p: Asas) {
           <section className="bahagian" aria-labelledby="tajuk-ditetapkan">
             <div className="baris-tajuk">
               <h2 id="tajuk-ditetapkan" className="label-bahagian">
-                DITETAPKAN ADMIN SEKOLAH · {isi.tahun}
+                DITETAPKAN ATAU DISAHKAN ADMIN · {isi.tahun}
               </h2>
             </div>
             <ul className="senarai-acara">
@@ -144,7 +145,7 @@ export function JobskopUtama(p: Asas) {
                       <strong>{namaPenuh(j)}</strong>
                       <span>
                         {j.kod ? `${j.kod} · ` : ''}
-                        {bilTugas(j.kumpulan)} tugas
+                        {bilTugas(j.kumpulan)} tugas · {disahkan(j) ? '✓ Disahkan admin' : 'Belum disahkan admin'}
                       </span>
                     </span>
                     <span className="pil pil-biru">Edit</span>

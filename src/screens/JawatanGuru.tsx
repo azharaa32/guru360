@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { KepalaKembali } from '../components/Rangka';
-import { LAJUR_JAWATAN, type JawatanDitetapkan } from '../lib/jawatan';
-import { NAMA_JENIS, muatMysg, type JenisPortfolio, type PortfolioMysg } from '../lib/jobskop';
+import { LAJUR_JAWATAN, padanJawatan, type JawatanDitetapkan } from '../lib/jawatan';
+import { NAMA_JENIS, muatMysg, namaPenuh, type IsiJobskop, type Jawatan, type JenisPortfolio, type PortfolioMysg } from '../lib/jobskop';
 import { senaraiAhli, type ButiranAhli } from '../lib/sekolah';
 import { supabase, terjemahRalat } from '../lib/supabase';
 
@@ -19,11 +19,15 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
   const [butiran, setButiran] = useState('');
   const [sibuk, setSibuk] = useState(false);
   const [sahPadam, setSahPadam] = useState<string | null>(null);
+  // Jobskop setiap guru (jawatan yang guru tambah sendiri), mengikut id guru.
+  const [jobskop, setJobskop] = useState<Record<string, IsiJobskop>>({});
 
   const muat = useCallback(async () => {
     const { data, error } = await supabase.from('jawatan_guru').select(LAJUR_JAWATAN).eq('sekolah_id', sekolahId);
     if (error) return setRalat(terjemahRalat(error.message));
     setSemua((data ?? []) as unknown as JawatanDitetapkan[]);
+    const j = await supabase.from('dokumen').select('id, guru_id, isi').eq('sekolah_id', sekolahId).eq('jenis', 'jobskop');
+    if (!j.error) setJobskop(Object.fromEntries(((j.data ?? []) as unknown as { guru_id: string; isi: IsiJobskop }[]).map((d) => [d.guru_id, d.isi])));
   }, [sekolahId]);
 
   useEffect(() => {
@@ -44,6 +48,25 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
   const dipilih = guruId ? (guru ?? []).find((g) => g.pengguna_id === guruId) : undefined;
   const tahunan = (semua ?? []).filter((j) => j.tahun === tahun);
   const milik = dipilih ? tahunan.filter((j) => j.guru_id === dipilih.pengguna_id) : [];
+
+  /** Jawatan dalam jobskop guru (bagi tahun dipilih) yang belum ditetapkan atau disahkan admin. */
+  const belumSah = (idGuru: string): Jawatan[] => {
+    const js = jobskop[idGuru];
+    if (!js || js.tahun !== tahun || !Array.isArray(js.jawatan)) return [];
+    const sah = tahunan.filter((x) => x.guru_id === idGuru);
+    return js.jawatan.filter((j) => !sah.some((d) => padanJawatan(d, j)));
+  };
+  const sahkan = async (j: Jawatan) => {
+    if (!dipilih || sibuk) return;
+    setSibuk(true);
+    setRalat(null);
+    const { error } = await supabase
+      .from('jawatan_guru')
+      .insert({ sekolah_id: sekolahId, guru_id: dipilih.pengguna_id, tahun, kod: j.kod ?? '', nama: j.nama.trim().slice(0, 160), butiran: (j.butiran ?? '').trim().toUpperCase().slice(0, 120) });
+    setSibuk(false);
+    if (error) setRalat(terjemahRalat(error.message));
+    await muat();
+  };
 
   const tetapkan = async (e: FormEvent) => {
     e.preventDefault();
@@ -104,13 +127,16 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
               <ul className="senarai-acara">
                 {guru.map((g) => {
                   const j = tahunan.filter((x) => x.guru_id === g.pengguna_id);
+                  const menunggu = belumSah(g.pengguna_id).length;
                   return (
                     <li key={g.pengguna_id}>
-                      <a href={`#/jawatan/${g.pengguna_id}`} className="kad kad-pautan">
+                      <a href={`#/jawatan/${g.pengguna_id}`} className={`kad kad-pautan${menunggu ? ' kad-garis-emas' : ''}`}>
                         <span className="kad-pautan-teks">
                           <strong className="pecah">{g.nama || g.emel}</strong>
                           <span className="pecah">{j.length === 0 ? 'Belum ada jawatan ditetapkan' : j.map((x) => (x.butiran ? `${x.nama} ${x.butiran}` : x.nama)).join(' · ')}</span>
+                          {menunggu > 0 && <span>{menunggu} jawatan ditambah guru menunggu pengesahan</span>}
                         </span>
+                        {menunggu > 0 && <span className="lencana-kira">{menunggu}</span>}
                         <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M9 6l6 6-6 6" />
                         </svg>
@@ -120,16 +146,46 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
                 })}
               </ul>
             )}
-            <p className="nota">Guru nampak jawatan yang ditetapkan di skrin Jobskop dan memasukkannya ke jobskop sendiri bersama senarai tugas MySG.</p>
+            <p className="nota">Guru nampak jawatan yang ditetapkan di skrin Jobskop dan memasukkannya ke jobskop sendiri. Guru juga boleh menambah jawatan sendiri; nombor kuning ialah jawatan yang menunggu pengesahan anda.</p>
           </>
         )}
 
         {semua && dipilih && (
           <>
+            {belumSah(dipilih.pengguna_id).length > 0 && (
+              <section className="bahagian" aria-labelledby="tajuk-sendiri">
+                <div className="baris-tajuk">
+                  <h2 id="tajuk-sendiri" className="label-bahagian">
+                    DITAMBAH GURU · MENUNGGU PENGESAHAN
+                  </h2>
+                  <span className="mono nota-kecil">{belumSah(dipilih.pengguna_id).length}</span>
+                </div>
+                <ul className="senarai-acara">
+                  {belumSah(dipilih.pengguna_id).map((j) => (
+                    <li key={j.id} className="kad kad-makluman kad-garis-emas">
+                      <div className="baris-ahli">
+                        <span className="acara-teks">
+                          <strong className="pecah">{namaPenuh(j)}</strong>
+                          <span>
+                            {j.kod ? `${j.kod} · ` : 'Jawatan sendiri · '}
+                            {(j.kumpulan ?? []).reduce((n, k) => n + k.tugas.length, 0)} tugas
+                          </span>
+                        </span>
+                        <button type="button" className="butang butang-utama butang-kecil" disabled={sibuk || !dalamTalian} onClick={() => void sahkan(j)}>
+                          Sahkan
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <p className="nota">Jika jawatan ini tidak betul, minta guru membuangnya daripada jobskop.</p>
+              </section>
+            )}
+
             <section className="bahagian" aria-labelledby="tajuk-ditetapkan">
               <div className="baris-tajuk">
                 <h2 id="tajuk-ditetapkan" className="label-bahagian">
-                  JAWATAN DITETAPKAN
+                  JAWATAN DITETAPKAN ATAU DISAHKAN
                 </h2>
                 <span className="mono nota-kecil">{milik.length}</span>
               </div>
