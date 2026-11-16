@@ -79,7 +79,7 @@ export function useMakluman(uid: string | null, dalamTalian: boolean) {
       if (!uid || !ids.length || !navigator.onLine) return;
       const { error } = await supabase
         .from('makluman_status')
-        .upsert(ids.map((id) => ({ makluman_id: id, guru_id: uid, sekolah_id: sekolahId })), { onConflict: 'makluman_id,guru_id', ignoreDuplicates: true });
+        .upsert(ids.map((id) => ({ makluman_id: id, guru_id: uid, sekolah_id: sekolahId })), { onConflict: 'makluman_id,guru_id,sekolah_id', ignoreDuplicates: true });
       if (!error) await muat();
     },
     [uid, muat],
@@ -93,7 +93,7 @@ export function useMakluman(uid: string | null, dalamTalian: boolean) {
       setRalat(null);
       const { error } = await supabase
         .from('makluman_status')
-        .upsert({ makluman_id: id, guru_id: uid, sekolah_id: sekolahId, siap_pada: siap ? new Date().toISOString() : null }, { onConflict: 'makluman_id,guru_id' });
+        .upsert({ makluman_id: id, guru_id: uid, sekolah_id: sekolahId, siap_pada: siap ? new Date().toISOString() : null }, { onConflict: 'makluman_id,guru_id,sekolah_id' });
       if (error) setRalat(terjemahRalat(error.message));
       await muat();
     },

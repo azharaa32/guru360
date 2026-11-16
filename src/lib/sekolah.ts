@@ -88,6 +88,14 @@ export function useKeahlian(uid: string | null, dalamTalian: boolean) {
     muat(uid).then(
       (k) => {
         if (!hidup) return;
+        // Sekolah berubah sejak kali terakhir (guru berpindah atau dikeluarkan): salinan data sekolah lama dalam
+        // telefon, termasuk perubahan yang belum dihantar, dibuang supaya tidak terbawa ke sekolah baharu.
+        if (tempatan && (tempatan.sekolah?.id ?? '') !== (k.sekolah?.id ?? '')) {
+          buangDataSekolahLama(uid);
+          tulisStoran(kunci, k);
+          window.location.reload();
+          return;
+        }
         tulisStoran(kunci, k);
         setKeahlian(k);
         setSedia(true);
@@ -102,6 +110,21 @@ export function useKeahlian(uid: string | null, dalamTalian: boolean) {
   }, [uid, dalamTalian, pusingan]);
 
   return { keahlian, sedia, ralat, cubaLagi: () => setPusingan((n) => n + 1) };
+}
+
+/** Buang salinan data guru dalam telefon ini (bukan di pelayan). Profil dan sesi log masuk dikekalkan. */
+function buangDataSekolahLama(uid: string): void {
+  try {
+    const kekal = new Set([`guru360.keahlian.${uid}`, `guru360.profil.${uid}`]);
+    const buang: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('guru360.') && k.includes(`.${uid}`) && !kekal.has(k)) buang.push(k);
+    }
+    buang.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* storan tidak tersedia */
+  }
 }
 
 export const NAMA_STATUS: Record<Sekolah['status'], string> = { aktif: 'Aktif', menunggu: 'Menunggu kelulusan', ditolak: 'Ditolak' };
@@ -159,6 +182,8 @@ export const senaraiMenunggu = () => panggil<{ senarai: Permohonan[] }>('urus-se
 export const putusSekolah = (aksi: 'lulus' | 'tolak', sekolahId: string) => panggil('urus-sekolah', { aksi, sekolah_id: sekolahId });
 export const ciptaSekolah = (d: DataSekolahBaru) => panggil('urus-sekolah', { aksi: 'cipta', ...d });
 /** Ibu pejabat: padam sekolah bersama semua datanya. Kod sekolah mesti ditaip semula sebagai pengesahan. */
+/** Ibu pejabat: gantikan admin sebuah sekolah. Admin lama dikeluarkan; admin baharu dijemput melalui emel jika belum ada akaun. */
+export const tukarAdmin = (sekolahId: string, adminNama: string, emel: string) => panggil<{ emel_dihantar: boolean }>('urus-sekolah', { aksi: 'tukar_admin', sekolah_id: sekolahId, admin_nama: adminNama, emel });
 export const padamSekolah = (sekolahId: string, kod: string) => panggil('urus-sekolah', { aksi: 'padam', sekolah_id: sekolahId, kod });
 
 export interface ButiranAhli {

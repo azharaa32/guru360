@@ -18,6 +18,7 @@ import {
   type Keahlian,
   type KodDaftar,
   type Permohonan,
+  tukarAdmin,
   type Sekolah,
 } from '../lib/sekolah';
 import { hariIni, tambahHari, tarikhMesra } from '../lib/kalendar';
@@ -402,6 +403,104 @@ function KodPendaftaran({ dalamTalian }: { dalamTalian: boolean }) {
   );
 }
 
+/** Ibu pejabat: gantikan admin sebuah sekolah (admin berpindah, bersara atau tersalah daftar). */
+function TukarAdmin({ keahlian, dalamTalian, muatSemula }: { keahlian: Keahlian; dalamTalian: boolean; muatSemula: () => void }) {
+  const [buka, setBuka] = useState(false);
+  const [id, setId] = useState('');
+  const [nama, setNama] = useState('');
+  const [emel, setEmel] = useState('');
+  const [sibuk, setSibuk] = useState(false);
+  const [mesej, setMesej] = useState<{ jenis: 'ok' | 'ralat'; teks: string } | null>(null);
+  const pilihan = [...keahlian.semuaSekolah].sort((a, b) => a.nama.localeCompare(b.nama));
+  const dipilih = pilihan.find((x) => x.id === id);
+  const sendiri = keahlian.peranan === 'admin' && keahlian.sekolah?.id === id;
+
+  const hantar = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!dipilih || sibuk) return;
+    setSibuk(true);
+    setMesej(null);
+    const alamat = emel.trim();
+    const h = await tukarAdmin(dipilih.id, nama, alamat);
+    setSibuk(false);
+    if (h.ok) {
+      setMesej({ jenis: 'ok', teks: h.emel_dihantar ? `Admin ${dipilih.nama} ditukar. Emel jemputan dihantar ke ${alamat}.` : `Admin ${dipilih.nama} ditukar kepada ${alamat}, yang sudah ada akaun Guru360.` });
+      setId('');
+      setNama('');
+      setEmel('');
+      setBuka(false);
+      muatSemula();
+    } else setMesej({ jenis: 'ralat', teks: h.ralat });
+  };
+
+  if (pilihan.length === 0) return null;
+  return (
+    <section className="bahagian" aria-labelledby="tajuk-tukar-admin">
+      <h2 id="tajuk-tukar-admin" className="label-bahagian">
+        TUKAR ADMIN SEKOLAH
+      </h2>
+      {mesej && !buka && (
+        <div className="kad">
+          <p className={`mesej mesej-${mesej.jenis}`} role="status">
+            {mesej.teks}
+          </p>
+        </div>
+      )}
+      {!buka ? (
+        <button
+          type="button"
+          className="butang butang-garis"
+          disabled={!dalamTalian}
+          onClick={() => {
+            setBuka(true);
+            setMesej(null);
+          }}
+        >
+          Tukar admin sebuah sekolah
+        </button>
+      ) : (
+        <form className="kad borang borang-sekolah" onSubmit={hantar}>
+          <p className="nota">Admin lama dikeluarkan serta-merta dan tidak lagi boleh mengurus sekolah itu. Data sekolah dan guru tidak berubah.</p>
+          <div className="medan">
+            <label htmlFor="tukar-sekolah">Sekolah</label>
+            <select id="tukar-sekolah" value={id} required onChange={(e) => setId(e.target.value)}>
+              <option value="">Pilih sekolah</option>
+              {pilihan.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.nama}
+                </option>
+              ))}
+            </select>
+          </div>
+          {sendiri && <p className="mesej mesej-tunggu">Ini sekolah yang anda sendiri tadbir. Selepas ditukar, akaun anda kekal sebagai ibu pejabat tetapi bukan lagi admin sekolah ini.</p>}
+          <div className="medan">
+            <label htmlFor="tukar-nama">Nama admin baharu</label>
+            <input id="tukar-nama" value={nama} onChange={(e) => setNama(e.target.value)} required minLength={2} maxLength={120} autoCapitalize="characters" autoComplete="off" />
+          </div>
+          <div className="medan">
+            <label htmlFor="tukar-emel">Emel admin baharu</label>
+            <input id="tukar-emel" type="email" inputMode="email" value={emel} onChange={(e) => setEmel(e.target.value)} required maxLength={254} autoCapitalize="none" autoComplete="off" spellCheck={false} />
+            <p className="bantuan">Emel yang masih ahli aktif mana-mana sekolah tidak diterima; keluarkan dahulu daripada sekolah itu.</p>
+          </div>
+          <div aria-live="polite">
+            {mesej && (
+              <p className={`mesej mesej-${mesej.jenis}`} role="alert">
+                {mesej.teks}
+              </p>
+            )}
+          </div>
+          <button type="submit" className="butang butang-utama" disabled={sibuk || !dipilih}>
+            {sibuk ? 'Sebentar…' : 'Tukar admin'}
+          </button>
+          <button type="button" className="butang-teks tengah" onClick={() => setBuka(false)}>
+            Batal
+          </button>
+        </form>
+      )}
+    </section>
+  );
+}
+
 /** Ibu pejabat: padam sekolah bersama semua datanya. Tidak boleh dipulihkan, jadi kod sekolah mesti ditaip semula. */
 function PadamSekolah({ keahlian, dalamTalian, muatSemula }: { keahlian: Keahlian; dalamTalian: boolean; muatSemula: () => void }) {
   const [buka, setBuka] = useState(false);
@@ -732,6 +831,8 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula, makluman, 
         {keahlian.ibuPejabat && <KodPendaftaran dalamTalian={dalamTalian} />}
 
         {keahlian.ibuPejabat && <CiptaSekolah muatSemula={muatSemula} />}
+
+        {keahlian.ibuPejabat && <TukarAdmin keahlian={keahlian} dalamTalian={dalamTalian} muatSemula={muatSemula} />}
 
         {keahlian.ibuPejabat && <PadamSekolah keahlian={keahlian} dalamTalian={dalamTalian} muatSemula={muatSemula} />}
       </main>
