@@ -15,6 +15,10 @@ import {
   type Permohonan,
   type Sekolah,
 } from '../lib/sekolah';
+import { hariIni, tambahHari, tarikhMesra } from '../lib/kalendar';
+import type { Makluman, StatusMakluman } from '../lib/makluman';
+import { mulaMinggu } from '../lib/rph';
+import { useRingkasanRph } from '../lib/semakan';
 import { supabase } from '../lib/supabase';
 import { BorangSekolah } from './DaftarSekolah';
 
@@ -287,7 +291,81 @@ function GuruSekolah({ dalamTalian, muatSemula }: { dalamTalian: boolean; muatSe
 }
 
 /** Skrin utama akaun pengurusan (admin sekolah dan ibu pejabat). Akaun ini tidak mengajar. */
-export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula }: { keahlian: Keahlian; nama: string; dalamTalian: boolean; muatSemula: () => void }) {
+/** Ibu pejabat: status ringkas setiap sekolah bagi minggu ini (guru, RPH, tindakan lewat). Tekan sekolah untuk membaca RPH. */
+function PapanHq({ keahlian, makluman, status, dalamTalian }: { keahlian: Keahlian; makluman: Makluman[]; status: StatusMakluman[]; dalamTalian: boolean }) {
+  const mula = mulaMinggu(hariIni(), null);
+  const tamat = tambahHari(mula, 6);
+  const rph = useRingkasanRph(true, mula, tamat, dalamTalian);
+  const kini = hariIni();
+  const lewat = makluman.filter((m) => m.jenis === 'tindakan' && m.tarikh_akhir && m.tarikh_akhir < kini);
+  const sekolah = [...keahlian.semuaSekolah].sort((a, b) => a.nama.localeCompare(b.nama));
+  const guru = (id: string) => keahlian.ahli.filter((a) => a.sekolah_id === id && a.status === 'aktif' && a.peranan === 'guru').map((a) => a.pengguna_id);
+  const jumlahGuru = sekolah.filter((x) => x.status === 'aktif').reduce((n, x) => n + guru(x.id).length, 0);
+  return (
+    <section className="bahagian" aria-labelledby="tajuk-semua-sekolah">
+      <div className="baris-tajuk">
+        <h2 id="tajuk-semua-sekolah" className="label-bahagian">
+          SEMUA SEKOLAH · MINGGU {tarikhMesra(mula, tamat).toUpperCase()}
+        </h2>
+      </div>
+      <p className="nota">
+        {sekolah.filter((x) => x.status === 'aktif').length} sekolah aktif · {jumlahGuru} guru
+        {!dalamTalian ? ' · sambung internet untuk angka RPH terkini' : ''}
+      </p>
+      {sekolah.length === 0 ? (
+        <p className="nota">Belum ada sekolah.</p>
+      ) : (
+        <ul className="senarai-acara">
+          {sekolah.map((x) => {
+            const g = guru(x.id);
+            const siap = rph.siap.filter((r) => r.sekolah_id === x.id);
+            const disemak = siap.filter((r) => rph.disemak.has(r.id)).length;
+            const adaRph = new Set(siap.map((r) => r.guru_id)).size;
+            const tertunggak = lewat
+              .filter((m) => m.sekolah_id === null || m.sekolah_id === x.id)
+              .reduce((n, m) => n + g.filter((id) => !status.some((st) => st.makluman_id === m.id && st.guru_id === id && st.siap_pada)).length, 0);
+            const isi = (
+              <>
+                <span className="kad-pautan-teks">
+                  <strong className="pecah">{x.nama}</strong>
+                  <span>
+                    {x.kod}
+                    {x.negeri ? ` · ${x.negeri}` : ''} · {g.length} guru
+                  </span>
+                  {x.status === 'aktif' && (
+                    <span>
+                      {rph.sedia ? `RPH: ${siap.length} siap · ${disemak} disemak · ${adaRph}/${g.length} guru` : 'RPH: -'}
+                      {' · '}
+                      {tertunggak > 0 ? `${tertunggak} tindakan lewat` : 'tiada tindakan lewat'}
+                    </span>
+                  )}
+                </span>
+                {x.status !== 'aktif' ? <span className={kelasStatus(x.status)}>● {NAMA_STATUS[x.status]}</span> : tertunggak > 0 ? <span className="lencana-kira">{tertunggak}</span> : null}
+              </>
+            );
+            return (
+              <li key={x.id}>
+                {x.status === 'aktif' ? (
+                  <a href={`#/sekolah/${x.id}`} className={`kad kad-pautan${tertunggak > 0 ? ' kad-garis-emas' : ''}`}>
+                    {isi}
+                    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 6l6 6-6 6" />
+                    </svg>
+                  </a>
+                ) : (
+                  <div className="kad kad-pautan">{isi}</div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <p className="nota">Tekan sekolah untuk membaca RPH gurunya. "Tindakan lewat" mengira setiap guru yang belum menandakan siap selepas tarikh akhir.</p>
+    </section>
+  );
+}
+
+export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula, makluman, status }: { keahlian: Keahlian; nama: string; dalamTalian: boolean; muatSemula: () => void; makluman: Makluman[]; status: StatusMakluman[] }) {
   const guruAktif = (sekolahId: string) => keahlian.ahli.filter((a) => a.sekolah_id === sekolahId && a.status === 'aktif' && a.peranan === 'guru').length;
   const s = keahlian.sekolah;
   return (
@@ -422,34 +500,7 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula }: { keahli
 
         {keahlian.ibuPejabat && <SenaraiMenunggu dalamTalian={dalamTalian} muatSemula={muatSemula} />}
 
-        {keahlian.ibuPejabat && (
-          <section className="bahagian" aria-labelledby="tajuk-semua-sekolah">
-            <div className="baris-tajuk">
-              <h2 id="tajuk-semua-sekolah" className="label-bahagian">
-                SEMUA SEKOLAH
-              </h2>
-              <span className="mono nota-kecil">{keahlian.semuaSekolah.length} sekolah</span>
-            </div>
-            {keahlian.semuaSekolah.length === 0 ? (
-              <p className="nota">Belum ada sekolah.</p>
-            ) : (
-              <ul className="senarai-acara">
-                {keahlian.semuaSekolah.map((x) => (
-                  <li key={x.id} className="kad acara">
-                    <span className="acara-teks">
-                      <strong>{x.nama}</strong>
-                      <span>
-                        {x.kod}
-                        {x.negeri ? ` · ${x.negeri}` : ''} · {guruAktif(x.id)} guru
-                      </span>
-                    </span>
-                    <span className={kelasStatus(x.status)}>● {NAMA_STATUS[x.status]}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
+        {keahlian.ibuPejabat && <PapanHq keahlian={keahlian} makluman={makluman} status={status} dalamTalian={dalamTalian} />}
 
         {keahlian.ibuPejabat && <CiptaSekolah muatSemula={muatSemula} />}
       </main>

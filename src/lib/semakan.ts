@@ -95,3 +95,33 @@ export function useSemakRph(sekolahId: string | null, mula: string, tamat: strin
 
   return { rph, semakan, sedia, ralat, semak, batal };
 }
+
+export interface RingkasanRph {
+  /** RPH berstatus siap pada minggu ini, semua sekolah. */
+  siap: { id: string; guru_id: string; sekolah_id: string }[];
+  /** id RPH yang sudah disemak. */
+  disemak: Set<string>;
+  sedia: boolean;
+}
+
+/** Ibu pejabat: ringkasan RPH siap dan disemak bagi satu minggu, merentas semua sekolah. Perlu internet. */
+export function useRingkasanRph(aktif: boolean, mula: string, tamat: string, dalamTalian: boolean): RingkasanRph {
+  const [r, setR] = useState<RingkasanRph>({ siap: [], disemak: new Set(), sedia: false });
+  useEffect(() => {
+    if (!aktif || !dalamTalian) return;
+    let hidup = true;
+    void (async () => {
+      const a = await supabase.from('rph').select('id, guru_id, sekolah_id').eq('status', 'siap').gte('tarikh', mula).lte('tarikh', tamat);
+      if (a.error || !hidup) return;
+      const siap = (a.data ?? []) as unknown as RingkasanRph['siap'];
+      const id = siap.map((x) => x.id);
+      const b = id.length ? await supabase.from('rph_semakan').select('rph_id').in('rph_id', id.slice(0, 1000)) : { data: [], error: null };
+      if (!hidup) return;
+      setR({ siap, disemak: new Set(((b.data ?? []) as unknown as { rph_id: string }[]).map((x) => x.rph_id)), sedia: true });
+    })();
+    return () => {
+      hidup = false;
+    };
+  }, [aktif, mula, tamat, dalamTalian]);
+  return r;
+}

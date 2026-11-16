@@ -176,3 +176,10 @@ export const jemputGuru = (emel: string) => panggil<{ emel_dihantar: boolean }>(
 export const hantarSemulaJemputan = (ahliId: string) => panggil('urus-ahli', { aksi: 'hantar_semula', ahli_id: ahliId });
 export const keluarkanGuru = (ahliId: string) => panggil('urus-ahli', { aksi: 'keluarkan', ahli_id: ahliId });
 export const mintaKeluar = (minta: boolean) => panggil('urus-ahli', { aksi: minta ? 'minta_keluar' : 'batal_minta' });
+
+/** Ibu pejabat: ahli mana-mana sekolah bersama nama dan emel. */
+export async function ahliSekolahHq(sekolahId: string): Promise<Hasil<{ senarai: ButiranAhli[] }>> {
+  const { data, error } = await supabase.rpc('butiran_sekolah_hq', { p_sekolah: sekolahId });
+  if (error) return { ok: false, ralat: 'Senarai guru tidak dapat dimuat.' };
+  return { ok: true, senarai: (data ?? []) as unknown as ButiranAhli[] };
+}

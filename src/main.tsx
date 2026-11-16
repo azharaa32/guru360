@@ -133,6 +133,11 @@ function App() {
               belumHantar={belumHantar}
               simpan={simpan}
             />
+        ) : laluan === 'sekolah' && keahlian.ibuPejabat && keahlian.semuaSekolah.some((x) => x.id === param[0] && x.status === 'aktif') ? (
+          (() => {
+            const x = keahlian.semuaSekolah.find((y) => y.id === param[0])!;
+            return <SemakRph key={x.id} sekolahId={x.id} negeri={x.negeri} dalamTalian={dalamTalian} tarikh={param[1]} guruId={param[2]} hq={{ namaSekolah: x.nama }} />;
+          })()
         ) : laluan === 'jawatan' && adminAktif && keahlian.sekolah ? (
           <JawatanGuru sekolahId={keahlian.sekolah.id} dalamTalian={dalamTalian} guruId={param[0]} />
         ) : laluan === 'dokumen' && adminAktif && keahlian.sekolah ? (
@@ -189,7 +194,7 @@ function App() {
             bolehUbah
           />
         ) : (
-          <Pengurusan keahlian={keahlian} nama={profil?.nama ?? ''} dalamTalian={dalamTalian} muatSemula={cubaLagi} />
+          <Pengurusan keahlian={keahlian} nama={profil?.nama ?? ''} dalamTalian={dalamTalian} muatSemula={cubaLagi} makluman={mak.makluman} status={mak.status} />
         )}
         <NavBawah aktif={laluan === 'profil' ? 'profil' : 'utama'} pengurusan />
       </div>

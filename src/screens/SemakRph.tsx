@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { KepalaKembali } from '../components/Rangka';
 import { dariTarikh, hariIni, tambahHari, tarikhMesra } from '../lib/kalendar';
 import { mulaMinggu } from '../lib/rph';
-import { senaraiAhli, type ButiranAhli } from '../lib/sekolah';
+import { ahliSekolahHq, senaraiAhli, type ButiranAhli } from '../lib/sekolah';
 import { useSemakRph, type RphGuru, type Semakan } from '../lib/semakan';
 
 const HARI = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
@@ -14,7 +14,7 @@ const hariTarikh = (t: string) => {
 const tarikhValid = (t: string | undefined): t is string => !!t && /^\d{4}-\d{2}-\d{2}$/.test(t) && !Number.isNaN(dariTarikh(t).getTime());
 
 /** Satu RPH guru: ringkasan, bacaan penuh, ulasan dan tanda disemak. */
-function KadRph({ r, s, semak, batal, dalamTalian }: { r: RphGuru; s: Semakan | undefined; semak: (r: RphGuru, ulasan: string) => Promise<void>; batal: (id: string) => Promise<void>; dalamTalian: boolean }) {
+function KadRph({ r, s, semak, batal, dalamTalian, bacaSahaja }: { r: RphGuru; s: Semakan | undefined; semak: (r: RphGuru, ulasan: string) => Promise<void>; batal: (id: string) => Promise<void>; dalamTalian: boolean; bacaSahaja: boolean }) {
   const [penuh, setPenuh] = useState(false);
   const [ulasan, setUlasan] = useState(s?.ulasan ?? '');
   const [sibuk, setSibuk] = useState(false);
@@ -53,7 +53,14 @@ function KadRph({ r, s, semak, batal, dalamTalian }: { r: RphGuru; s: Semakan | 
       <button type="button" className="butang-teks" aria-expanded={penuh} onClick={() => setPenuh((p) => !p)}>
         {penuh ? 'Tutup' : 'Baca penuh'}
       </button>
-      {siap ? (
+      {bacaSahaja ? (
+        s?.ulasan ? (
+          <div className="semak-bahagian">
+            <span className="label-bahagian">ULASAN ADMIN SEKOLAH</span>
+            <p>{s.ulasan}</p>
+          </div>
+        ) : null
+      ) : siap ? (
         <>
           <div className="medan">
             <label htmlFor={`ulasan-${r.id}`}>Ulasan (pilihan)</label>
@@ -77,8 +84,19 @@ function KadRph({ r, s, semak, batal, dalamTalian }: { r: RphGuru; s: Semakan | 
   );
 }
 
-/** Admin sekolah: baca dan semak RPH guru sekolahnya, minggu demi minggu. */
-export function SemakRph({ sekolahId, negeri, dalamTalian, tarikh, guruId }: { sekolahId: string; negeri: string | null; dalamTalian: boolean; tarikh?: string; guruId?: string }) {
+interface PropsSemak {
+  sekolahId: string;
+  negeri: string | null;
+  dalamTalian: boolean;
+  tarikh?: string;
+  guruId?: string;
+  /** Ibu pejabat: baca RPH mana-mana sekolah tanpa menyemak. */
+  hq?: { namaSekolah: string };
+}
+
+/** Admin sekolah: baca dan semak RPH guru sekolahnya, minggu demi minggu. Ibu pejabat: baca sahaja. */
+export function SemakRph({ sekolahId, negeri, dalamTalian, tarikh, guruId, hq }: PropsSemak) {
+  const asas = hq ? `#/sekolah/${sekolahId}` : '#/semak';
   const mula = mulaMinggu(tarikhValid(tarikh) ? tarikh : hariIni(), negeri);
   const tamat = tambahHari(mula, 6);
   const mingguIni = mulaMinggu(hariIni(), negeri);
@@ -88,13 +106,13 @@ export function SemakRph({ sekolahId, negeri, dalamTalian, tarikh, guruId }: { s
   useEffect(() => {
     if (!dalamTalian) return;
     let hidup = true;
-    void senaraiAhli().then((h) => {
+    void (hq ? ahliSekolahHq(sekolahId) : senaraiAhli()).then((h) => {
       if (hidup && h.ok) setGuru(h.senarai.filter((a) => a.peranan === 'guru'));
     });
     return () => {
       hidup = false;
     };
-  }, [dalamTalian]);
+  }, [dalamTalian, sekolahId, !!hq]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const petaSemakan = new Map(semakan.map((s) => [s.rph_id, s]));
   const nama = (id: string) => {
@@ -117,20 +135,20 @@ export function SemakRph({ sekolahId, negeri, dalamTalian, tarikh, guruId }: { s
   return (
     <>
       <KepalaKembali
-        ke={dipilih ? `#/semak/${mula}` : '#/'}
+        ke={dipilih ? `${asas}/${mula}` : '#/'}
         labelKembali={dipilih ? 'Kembali ke senarai guru' : 'Kembali ke Pengurusan'}
-        tajuk={dipilih ? nama(dipilih) : 'Semak RPH'}
-        sub={`Minggu ${tarikhMesra(mula, tamat)}`}
+        tajuk={dipilih ? nama(dipilih) : hq ? hq.namaSekolah : 'Semak RPH'}
+        sub={`${hq && !dipilih ? 'RPH · baca sahaja · ' : ''}Minggu ${tarikhMesra(mula, tamat)}`}
       />
       <main className="isi">
         <nav className="pilih-minggu" aria-label="Pilih minggu">
-          <a href={`#/semak/${tambahHari(mula, -7)}${dipilih ? `/${dipilih}` : ''}`} aria-label="Minggu sebelum">
+          <a href={`${asas}/${tambahHari(mula, -7)}${dipilih ? `/${dipilih}` : ''}`} aria-label="Minggu sebelum">
             ‹ Sebelum
           </a>
-          <a href={`#/semak/${mingguIni}${dipilih ? `/${dipilih}` : ''}`} aria-current={mula === mingguIni ? 'page' : undefined}>
+          <a href={`${asas}/${mingguIni}${dipilih ? `/${dipilih}` : ''}`} aria-current={mula === mingguIni ? 'page' : undefined}>
             Minggu ini
           </a>
-          <a href={`#/semak/${tambahHari(mula, 7)}${dipilih ? `/${dipilih}` : ''}`} aria-label="Minggu selepas">
+          <a href={`${asas}/${tambahHari(mula, 7)}${dipilih ? `/${dipilih}` : ''}`} aria-label="Minggu selepas">
             Selepas ›
           </a>
         </nav>
@@ -162,7 +180,7 @@ export function SemakRph({ sekolahId, negeri, dalamTalian, tarikh, guruId }: { s
                   const k = kira(id);
                   return (
                     <li key={id}>
-                      <a href={`#/semak/${mula}/${id}`} className={`kad kad-pautan${k.belum > 0 ? ' kad-garis-emas' : ''}`}>
+                      <a href={`${asas}/${mula}/${id}`} className={`kad kad-pautan${k.belum > 0 ? ' kad-garis-emas' : ''}`}>
                         <span className="kad-pautan-teks">
                           <strong className="pecah">{nama(id)}</strong>
                           <span>{k.siap + k.draf === 0 ? 'Tiada RPH minggu ini' : `${k.siap} siap · ${k.draf} draf · ${k.disemak} disemak`}</span>
@@ -177,7 +195,7 @@ export function SemakRph({ sekolahId, negeri, dalamTalian, tarikh, guruId }: { s
                 })}
               </ul>
             )}
-            <p className="nota">Nombor kuning ialah bilangan RPH siap yang belum disemak. Guru nampak tanda "Disemak" dan ulasan pada RPH masing-masing.</p>
+            <p className="nota">{hq ? 'Nombor kuning ialah bilangan RPH siap yang belum disemak oleh admin sekolah. Ibu pejabat membaca sahaja.' : 'Nombor kuning ialah bilangan RPH siap yang belum disemak. Guru nampak tanda "Disemak" dan ulasan pada RPH masing-masing.'}</p>
           </section>
         )}
 
@@ -188,11 +206,11 @@ export function SemakRph({ sekolahId, negeri, dalamTalian, tarikh, guruId }: { s
             ) : (
               <ul className="senarai-acara">
                 {milikDipilih.map((r) => (
-                  <KadRph key={r.id} r={r} s={petaSemakan.get(r.id)} semak={semak} batal={batal} dalamTalian={dalamTalian} />
+                  <KadRph key={r.id} r={r} s={petaSemakan.get(r.id)} semak={semak} batal={batal} dalamTalian={dalamTalian} bacaSahaja={!!hq} />
                 ))}
               </ul>
             )}
-            <p className="nota">RPH yang sudah disemak masih boleh diedit oleh guru; tanda semakan akan gugur jika isinya diubah.</p>
+            {!hq && <p className="nota">RPH yang sudah disemak masih boleh diedit oleh guru; tanda semakan akan gugur jika isinya diubah.</p>}
           </>
         )}
       </main>
