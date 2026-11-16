@@ -133,6 +133,8 @@ function App() {
               belumHantar={belumHantar}
               simpan={simpan}
             />
+        ) : laluan === 'panduan' ? (
+          <Panduan peranan={keahlian.ibuPejabat ? 'hq' : 'admin'} adminSekolah={adminAktif} />
         ) : laluan === 'sekolah' && keahlian.ibuPejabat && keahlian.semuaSekolah.some((x) => x.id === param[0] && x.status === 'aktif') ? (
           (() => {
             const x = keahlian.semuaSekolah.find((y) => y.id === param[0])!;
