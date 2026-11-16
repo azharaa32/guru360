@@ -5,6 +5,7 @@ import type { Profil } from '../lib/akaun';
 import { useSimpanAuto } from '../lib/auto';
 import type { Dokumen } from '../lib/dokumen';
 import { NAMA_JENIS, bilTugas, dariMysg, isiJobskop, jobskopKosong, kemasJawatan, muatMysg, namaPenuh, type DataMysg, type IsiJobskop, type Jawatan, type JenisPortfolio, type PortfolioMysg } from '../lib/jobskop';
+import type { JawatanDitetapkan } from '../lib/jawatan';
 import type { KepalaSurat } from '../lib/pdf';
 import { TEMPLAT_KOSONG, type Logo, type Templat } from '../lib/templat';
 
@@ -18,6 +19,8 @@ interface Asas {
   profil: Profil | null;
   templat: Templat | null;
   logo: Logo;
+  /** Jawatan yang ditetapkan admin sekolah kepada guru ini. */
+  ditetapkan?: JawatanDitetapkan[];
 }
 
 const cariJobskop = (semua: Dokumen[]) => semua.find((d) => d.jenis === 'jobskop');
@@ -52,6 +55,19 @@ export function JobskopUtama(p: Asas) {
     ubah({ jawatan: j });
   };
 
+  // Jawatan yang ditetapkan admin bagi tahun jobskop ini, dan sama ada ia sudah dimasukkan.
+  const ditetapkan = (p.ditetapkan ?? []).filter((d) => d.tahun === isi.tahun);
+  const sudahAda = (d: JawatanDitetapkan) => isi.jawatan.some((j) => (d.kod ? j.kod === d.kod : j.nama.toUpperCase() === d.nama.toUpperCase()) && (!d.butiran || j.butiran.toUpperCase() === d.butiran.toUpperCase()));
+  const [menambah, setMenambah] = useState<string | null>(null);
+  const tambahDitetapkan = async (d: JawatanDitetapkan) => {
+    setMenambah(d.id);
+    const mysg = await muatMysg().catch(() => null);
+    const port = mysg?.portfolio.find((x) => x.kod === d.kod);
+    const baharu: Jawatan = port ? { ...dariMysg(port, port.kumpulan.map((_, i) => i)), butiran: d.butiran } : { id: d.id, kod: d.kod, nama: d.nama, butiran: d.butiran, kumpulan: [] };
+    ubah({ jawatan: [...isi.jawatan, port ? kemasJawatan(baharu) : baharu] });
+    setMenambah(null);
+  };
+
   const janaPdf = () => {
     const tm = p.templat ?? TEMPLAT_KOSONG;
     const kepala: KepalaSurat = { nama_sekolah: tm.nama_sekolah || p.profil?.sekolah || '', alamat: tm.alamat, telefon: tm.telefon, emel: tm.emel, kod_sekolah: tm.kod_sekolah, logoKiri: p.logo.kiri, logoKanan: p.logo.kanan };
@@ -72,6 +88,34 @@ export function JobskopUtama(p: Asas) {
     <>
       <KepalaKembali ke="#/" labelKembali="Kembali ke Utama" tajuk="Jobskop" sub="Senarai tugas ikut MySG Sekolah Rendah" />
       <main className="isi">
+        {ditetapkan.length > 0 && (
+          <section className="bahagian" aria-labelledby="tajuk-ditetapkan">
+            <div className="baris-tajuk">
+              <h2 id="tajuk-ditetapkan" className="label-bahagian">
+                DITETAPKAN ADMIN SEKOLAH · {isi.tahun}
+              </h2>
+            </div>
+            <ul className="senarai-acara">
+              {ditetapkan.map((d) => (
+                <li key={d.id} className={`kad kad-makluman${sudahAda(d) ? '' : ' kad-garis-emas'}`}>
+                  <div className="baris-ahli">
+                    <span className="acara-teks">
+                      <strong>{d.butiran ? `${d.nama} ${d.butiran}` : d.nama}</strong>
+                      {d.kod && <span>{d.kod}</span>}
+                    </span>
+                    {sudahAda(d) && <span className="pil pil-siap">✓ Dalam jobskop</span>}
+                  </div>
+                  {!sudahAda(d) && (
+                    <button type="button" className="butang butang-utama butang-kecil" disabled={menambah === d.id} onClick={() => void tambahDitetapkan(d)}>
+                      {menambah === d.id ? 'Sebentar…' : 'Tambah ke jobskop saya'}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="bahagian" aria-labelledby="tajuk-jobskop">
           <div className="baris-tajuk">
             <h2 id="tajuk-jobskop" className="label-bahagian">

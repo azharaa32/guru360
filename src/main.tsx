@@ -9,6 +9,7 @@ import { binaKalendar, useCutiBersama, useCutiSendiri } from './lib/kalendar';
 import { useDokumen } from './lib/dokumen';
 import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
+import { useJawatanSaya } from './lib/jawatan';
 import { useMakluman } from './lib/makluman';
 import { useKeahlian } from './lib/sekolah';
 import { useSemakanSaya } from './lib/semakan';
@@ -17,6 +18,7 @@ import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
 import { Pengurusan, TiadaSekolah } from './screens/Sekolah';
 import { DokumenGuru } from './screens/DokumenGuru';
+import { JawatanGuru } from './screens/JawatanGuru';
 import { MaklumanGuru, MaklumanUrus } from './screens/Makluman';
 import { Panduan } from './screens/Panduan';
 import { SemakRph } from './screens/SemakRph';
@@ -60,6 +62,7 @@ function App() {
   // Cuti yang ditetapkan sekolah dan ibu pejabat digabung dengan cuti sendiri guru untuk kalendar dan RPH.
   const bersama = useCutiBersama(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
   const semakanSaya = useSemakanSaya(uidGuru, dalamTalian);
+  const jawatanSaya = useJawatanSaya(uidGuru, dalamTalian);
   const mak = useMakluman(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
   const guruAktif = (sekolahId?: string) => keahlian.ahli.filter((a) => a.peranan === 'guru' && a.status === 'aktif' && (!sekolahId || a.sekolah_id === sekolahId)).length;
   const semuaCuti = useMemo(() => [...cutiSendiri.cuti, ...bersama.cuti], [cutiSendiri.cuti, bersama.cuti]);
@@ -130,6 +133,8 @@ function App() {
               belumHantar={belumHantar}
               simpan={simpan}
             />
+        ) : laluan === 'jawatan' && adminAktif && keahlian.sekolah ? (
+          <JawatanGuru sekolahId={keahlian.sekolah.id} dalamTalian={dalamTalian} guruId={param[0]} />
         ) : laluan === 'dokumen' && adminAktif && keahlian.sekolah ? (
           <DokumenGuru sekolahId={keahlian.sekolah.id} dalamTalian={dalamTalian} guruId={param[0]} dokId={param[1]} />
         ) : laluan === 'semak' && adminAktif && keahlian.sekolah ? (
@@ -257,7 +262,7 @@ function App() {
         })()}
       {laluan === 'jobskop' &&
         (() => {
-          const asas = { ...dok, profil, templat: templat.templat, logo: templat.logo };
+          const asas = { ...dok, profil, templat: templat.templat, logo: templat.logo, ditetapkan: jawatanSaya };
           return param[0] === 'pilih' ? <JobskopPilih {...asas} /> : param[0] === 'e' ? <JobskopEdit key={param[1]} {...asas} id={param[1]} /> : <JobskopUtama {...asas} />;
         })()}
       {laluan === 'takwim' && (
