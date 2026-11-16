@@ -7,6 +7,7 @@ import {
   keluarkanGuru,
   NAMA_STATUS,
   namaPeranan,
+  padamSekolah,
   putusSekolah,
   senaraiAhli,
   senaraiMenunggu,
@@ -291,6 +292,122 @@ function GuruSekolah({ dalamTalian, muatSemula }: { dalamTalian: boolean; muatSe
 }
 
 /** Skrin utama akaun pengurusan (admin sekolah dan ibu pejabat). Akaun ini tidak mengajar. */
+/** Ibu pejabat: padam sekolah bersama semua datanya. Tidak boleh dipulihkan, jadi kod sekolah mesti ditaip semula. */
+function PadamSekolah({ keahlian, dalamTalian, muatSemula }: { keahlian: Keahlian; dalamTalian: boolean; muatSemula: () => void }) {
+  const [buka, setBuka] = useState(false);
+  const [id, setId] = useState('');
+  const [kod, setKod] = useState('');
+  const [sibuk, setSibuk] = useState(false);
+  const [mesej, setMesej] = useState<{ jenis: 'ok' | 'ralat'; teks: string } | null>(null);
+  // Sekolah yang ditadbir sendiri tidak boleh dipadam dari sini.
+  const sendiri = keahlian.peranan === 'admin' ? keahlian.sekolah?.id : undefined;
+  const pilihan = keahlian.semuaSekolah.filter((x) => x.id !== sendiri).sort((a, b) => a.nama.localeCompare(b.nama));
+  const dipilih = pilihan.find((x) => x.id === id);
+  const bilAhli = dipilih ? keahlian.ahli.filter((a) => a.sekolah_id === dipilih.id && a.status === 'aktif').length : 0;
+  const padan = !!dipilih && kod.trim().toUpperCase() === dipilih.kod.toUpperCase();
+
+  const hantar = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!dipilih || !padan || sibuk) return;
+    setSibuk(true);
+    setMesej(null);
+    const h = await padamSekolah(dipilih.id, kod.trim());
+    setSibuk(false);
+    if (h.ok) {
+      setMesej({ jenis: 'ok', teks: `${dipilih.nama} dan semua datanya telah dipadam.` });
+      setId('');
+      setKod('');
+      setBuka(false);
+      muatSemula();
+    } else setMesej({ jenis: 'ralat', teks: h.ralat });
+  };
+
+  if (pilihan.length === 0) return null;
+  return (
+    <section className="bahagian" aria-labelledby="tajuk-padam">
+      <h2 id="tajuk-padam" className="label-bahagian">
+        PADAM SEKOLAH
+      </h2>
+      {mesej && !buka && (
+        <div className="kad">
+          <p className={`mesej mesej-${mesej.jenis}`} role="status">
+            {mesej.teks}
+          </p>
+        </div>
+      )}
+      {!buka ? (
+        <button
+          type="button"
+          className="butang butang-garis"
+          disabled={!dalamTalian}
+          onClick={() => {
+            setBuka(true);
+            setMesej(null);
+          }}
+        >
+          Padam sebuah sekolah
+        </button>
+      ) : (
+        <form className="kad borang borang-sekolah kad-garis-merah" onSubmit={hantar}>
+          <p className="mesej mesej-ralat">
+            <strong>Tidak boleh dipulihkan.</strong> Semua data sekolah itu dipadam: keahlian guru, RPH, dokumen, program, jadual waktu, cuti, makluman, jawatan, kepala surat dan logo. Akaun guru kekal tetapi tidak lagi mempunyai sekolah.
+          </p>
+          <div className="medan">
+            <label htmlFor="padam-sekolah">Sekolah</label>
+            <select
+              id="padam-sekolah"
+              value={id}
+              required
+              onChange={(e) => {
+                setId(e.target.value);
+                setKod('');
+                setMesej(null);
+              }}
+            >
+              <option value="">Pilih sekolah</option>
+              {pilihan.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.nama} ({NAMA_STATUS[x.status]})
+                </option>
+              ))}
+            </select>
+          </div>
+          {dipilih && (
+            <div className="medan">
+              <label htmlFor="padam-kod">
+                Taip kod sekolah <span className="mono">{dipilih.kod}</span> untuk mengesahkan
+              </label>
+              <input id="padam-kod" value={kod} onChange={(e) => setKod(e.target.value)} autoCapitalize="characters" autoComplete="off" spellCheck={false} maxLength={20} required />
+              <p className="bantuan">{bilAhli} ahli aktif akan kehilangan akses kepada data sekolah ini.</p>
+            </div>
+          )}
+          <div aria-live="polite">
+            {mesej && (
+              <p className={`mesej mesej-${mesej.jenis}`} role="alert">
+                {mesej.teks}
+              </p>
+            )}
+          </div>
+          <button type="submit" className="butang butang-bahaya" disabled={!padan || sibuk}>
+            {sibuk ? 'Memadam…' : 'Padam sekolah dan semua datanya'}
+          </button>
+          <button
+            type="button"
+            className="butang-teks tengah"
+            onClick={() => {
+              setBuka(false);
+              setId('');
+              setKod('');
+            }}
+          >
+            Batal
+          </button>
+        </form>
+      )}
+    </section>
+  );
+}
+
 /** Ibu pejabat: status ringkas setiap sekolah bagi minggu ini (guru, RPH, tindakan lewat). Tekan sekolah untuk membaca RPH. */
 function PapanHq({ keahlian, makluman, status, dalamTalian }: { keahlian: Keahlian; makluman: Makluman[]; status: StatusMakluman[]; dalamTalian: boolean }) {
   const mula = mulaMinggu(hariIni(), null);
@@ -503,6 +620,8 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula, makluman, 
         {keahlian.ibuPejabat && <PapanHq keahlian={keahlian} makluman={makluman} status={status} dalamTalian={dalamTalian} />}
 
         {keahlian.ibuPejabat && <CiptaSekolah muatSemula={muatSemula} />}
+
+        {keahlian.ibuPejabat && <PadamSekolah keahlian={keahlian} dalamTalian={dalamTalian} muatSemula={muatSemula} />}
       </main>
     </>
   );

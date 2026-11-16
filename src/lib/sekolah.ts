@@ -156,6 +156,8 @@ export const daftarSekolah = (d: DataSekolahBaru) => panggil('daftar-sekolah', d
 export const senaraiMenunggu = () => panggil<{ senarai: Permohonan[] }>('urus-sekolah', { aksi: 'menunggu' });
 export const putusSekolah = (aksi: 'lulus' | 'tolak', sekolahId: string) => panggil('urus-sekolah', { aksi, sekolah_id: sekolahId });
 export const ciptaSekolah = (d: DataSekolahBaru) => panggil('urus-sekolah', { aksi: 'cipta', ...d });
+/** Ibu pejabat: padam sekolah bersama semua datanya. Kod sekolah mesti ditaip semula sebagai pengesahan. */
+export const padamSekolah = (sekolahId: string, kod: string) => panggil('urus-sekolah', { aksi: 'padam', sekolah_id: sekolahId, kod });
 
 export interface ButiranAhli {
   id: string;

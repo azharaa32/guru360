@@ -1,4 +1,4 @@
-// Tindakan ibu pejabat: senarai permohonan, lulus, tolak dan cipta sekolah. Pemanggil mesti akaun ibu pejabat.
+// Tindakan ibu pejabat: senarai permohonan, lulus, tolak, cipta dan padam sekolah. Pemanggil mesti akaun ibu pejabat.
 import { balas, ciptaSekolah, klienAdmin, praterbang, ralat, semak } from './cipta.ts';
 
 Deno.serve(async (req: Request) => {
@@ -64,6 +64,30 @@ Deno.serve(async (req: Request) => {
     const d = semak(badan);
     if (typeof d === 'string') return ralat(d);
     return await ciptaSekolah(admin, d, 'aktif', 'ibu_pejabat', uid);
+  }
+
+  if (aksi === 'padam') {
+    // Memadam sekolah bersama semua datanya. Tidak boleh dipulihkan, jadi kod sekolah mesti ditaip semula.
+    const id = typeof badan.sekolah_id === 'string' ? badan.sekolah_id : '';
+    const kod = typeof badan.kod === 'string' ? badan.kod.trim().toUpperCase() : '';
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return ralat('Sekolah tidak sah.');
+    const s = await admin.from('sekolah').select('id, kod').eq('id', id).maybeSingle();
+    if (s.error) return balas({ ok: false, ralat: 'Pelayan sibuk. Cuba lagi sebentar.' }, 500);
+    if (!s.data) return ralat('Sekolah ini sudah tiada. Muat semula senarai.');
+    if (!kod || kod !== String((s.data as { kod: string }).kod).toUpperCase()) return ralat('Kod sekolah yang ditaip tidak sepadan.');
+    const saya = await admin.from('ahli').select('id').eq('sekolah_id', id).eq('pengguna_id', uid).eq('status', 'aktif').maybeSingle();
+    if (saya.error) return balas({ ok: false, ralat: 'Pelayan sibuk. Cuba lagi sebentar.' }, 500);
+    if (saya.data) return ralat('Anda admin sekolah ini. Sekolah sendiri tidak boleh dipadam dari sini.');
+
+    // Fail dalam folder sekolah (logo). Kegagalan di sini tidak menghalang pemadaman data.
+    const fail = await admin.storage.from('fail').list(id, { limit: 100 });
+    if (!fail.error && fail.data.length) await admin.storage.from('fail').remove(fail.data.map((f) => `${id}/${f.name}`));
+
+    // Semua jadual yang merujuk sekolah (ahli, RPH, dokumen, program, cuti, makluman, jawatan, templat) ikut terpadam.
+    const r = await admin.from('sekolah').delete().eq('id', id).select('id');
+    if (r.error) return balas({ ok: false, ralat: 'Sekolah tidak dapat dipadam. Cuba lagi.' }, 500);
+    if ((r.data ?? []).length === 0) return ralat('Sekolah ini sudah tiada. Muat semula senarai.');
+    return balas({ ok: true });
   }
 
   return ralat('Tindakan tidak dikenali.');
