@@ -4,7 +4,7 @@ import { Kepala } from '../components/Rangka';
 import type { Profil } from '../lib/akaun';
 import { jenisPeranti, usePasang } from '../lib/hooks';
 import { label, masa12, type Waktu } from '../lib/jadual';
-import { hariIni, tarikhMesra, type Kalendar } from '../lib/kalendar';
+import { hariIni, tambahHari, tarikhMesra, type Kalendar } from '../lib/kalendar';
 import { hariDalamMinggu, keadaan, kunciMasa, mulaMinggu, type Rph } from '../lib/rph';
 import { hariSekolahSeterusnya, susunHari, useMasaKini } from './HariIni';
 
@@ -67,6 +67,8 @@ interface Props {
   rph: Rph[];
   /** Bilangan makluman untuk kad di bahagian atas; perhatian = belum dibaca atau tindakan belum siap. */
   makluman?: { jumlah: number; belumBaca: number; belumSiap: number; perhatian: number };
+  /** Peringatan RPH daripada admin sekolah yang belum ditanda faham; `minggu` ialah hari pertama setiap minggu. */
+  peringatan?: { minggu: string[]; tandaBaca: () => void; dalamTalian: boolean };
 }
 
 /** Ringkasan minggu persekolahan semasa: RPH siap, draf, belum. */
@@ -142,7 +144,7 @@ function KadHariIni({ kal, waktu, rph }: Pick<Props, 'kal' | 'waktu' | 'rph'>) {
   );
 }
 
-export function Utama({ profil, sedia, kal, waktu, rph, makluman }: Props) {
+export function Utama({ profil, sedia, kal, waktu, rph, makluman, peringatan }: Props) {
   const nama = profil?.nama ?? '';
   const ringkasan = useRingkasanMinggu(kal, waktu, rph);
   return (
@@ -162,6 +164,22 @@ export function Utama({ profil, sedia, kal, waktu, rph, makluman }: Props) {
         <Kepala kecil="Selamat datang ke" tajuk="Guru360" sub="Kerja harian guru dalam satu aplikasi" />
       )}
       <main className="isi">
+        {peringatan && peringatan.minggu.length > 0 && (
+          <section className="kad kad-makluman kad-garis-emas" aria-labelledby="tajuk-peringatan">
+            <strong id="tajuk-peringatan">Peringatan daripada admin sekolah</strong>
+            <p className="nota">
+              Sila lengkapkan RPH {peringatan.minggu.length > 1 ? 'bagi minggu-minggu ini' : 'minggu'}: {peringatan.minggu.map((m) => tarikhMesra(m, tambahHari(m, 6))).join('; ')}.
+            </p>
+            <div className="dua-butang">
+              <button type="button" className="butang butang-garis butang-kecil" disabled={!peringatan.dalamTalian} onClick={peringatan.tandaBaca}>
+                Baik, faham
+              </button>
+              <a href={`#/rph/m/${peringatan.minggu[0]}`} className="butang butang-utama butang-kecil">
+                Buka RPH
+              </a>
+            </div>
+          </section>
+        )}
         {makluman && makluman.jumlah > 0 && (
           <a href="#/makluman" className={`kad kad-pautan${makluman.perhatian > 0 ? ' kad-garis-emas' : ''}`}>
             <span className="kad-pautan-teks">

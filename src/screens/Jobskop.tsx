@@ -56,7 +56,8 @@ export function JobskopUtama(p: Asas) {
   };
 
   // Jawatan yang ditetapkan admin bagi tahun jobskop ini, dan sama ada ia sudah dimasukkan.
-  const ditetapkan = (p.ditetapkan ?? []).filter((d) => d.tahun === isi.tahun);
+  const ditetapkan = (p.ditetapkan ?? []).filter((d) => d.tahun === isi.tahun && d.status !== 'ditolak');
+  const ditolak = (j: Jawatan) => (p.ditetapkan ?? []).some((d) => d.tahun === isi.tahun && d.status === 'ditolak' && padanJawatan(d, j));
   const sudahAda = (d: JawatanDitetapkan) => isi.jawatan.some((j) => padanJawatan(d, j));
   const disahkan = (j: Jawatan) => ditetapkan.some((d) => padanJawatan(d, j));
   const [menambah, setMenambah] = useState<string | null>(null);
@@ -145,7 +146,7 @@ export function JobskopUtama(p: Asas) {
                       <strong>{namaPenuh(j)}</strong>
                       <span>
                         {j.kod ? `${j.kod} · ` : ''}
-                        {bilTugas(j.kumpulan)} tugas · {disahkan(j) ? '✓ Disahkan admin' : 'Belum disahkan admin'}
+                        {bilTugas(j.kumpulan)} tugas · {disahkan(j) ? '✓ Disahkan admin' : ditolak(j) ? '✗ Ditolak admin sekolah' : 'Belum disahkan admin'}
                       </span>
                     </span>
                     <span className="pil pil-biru">Edit</span>

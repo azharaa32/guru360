@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { Waktu } from './jadual';
+import type { CutiSendiri } from './kalendar';
 import type { Rph } from './rph';
 import { bacaStoran, tulisStoran } from './simpanan';
 import { supabase, terjemahRalat } from './supabase';
@@ -124,4 +126,54 @@ export function useRingkasanRph(aktif: boolean, mula: string, tamat: string, dal
     };
   }, [aktif, mula, tamat, dalamTalian]);
   return r;
+}
+
+export type WaktuGuru = Waktu & { guru_id: string };
+
+/**
+ * Admin sekolah atau ibu pejabat: jadual waktu semua guru sebuah sekolah, cuti yang ditetapkan sekolah dan ibu pejabat,
+ * dan peringatan yang sudah dihantar bagi minggu ini (id guru -> masa dihantar). Perlu internet.
+ */
+export function useJadualSekolah(sekolahId: string | null, minggu: string, dalamTalian: boolean) {
+  const [waktu, setWaktu] = useState<WaktuGuru[]>([]);
+  const [cuti, setCuti] = useState<CutiSendiri[]>([]);
+  const [diingatkan, setDiingatkan] = useState<Map<string, string>>(new Map());
+  const [versi, setVersi] = useState(0);
+
+  useEffect(() => {
+    if (!sekolahId || !dalamTalian) return;
+    let hidup = true;
+    void (async () => {
+      const j = await supabase.from('jadual_waktu').select('id, guru_id, hari, mula, tamat, subjek, kelas, perlu_rph').eq('sekolah_id', sekolahId);
+      const c = await supabase.from('cuti_bersama').select('id, sekolah_id, mula, tamat, nama, jenis, ikut_hari');
+      if (!hidup) return;
+      if (!j.error) setWaktu(((j.data ?? []) as unknown as WaktuGuru[]).map((w) => ({ ...w, mula: w.mula.slice(0, 5), tamat: w.tamat.slice(0, 5) })));
+      if (!c.error) setCuti(((c.data ?? []) as unknown as (CutiSendiri & { sekolah_id: string | null })[]).filter((x) => x.sekolah_id === null || x.sekolah_id === sekolahId));
+    })();
+    return () => {
+      hidup = false;
+    };
+  }, [sekolahId, dalamTalian]);
+
+  useEffect(() => {
+    if (!sekolahId || !dalamTalian) return;
+    let hidup = true;
+    void supabase
+      .from('peringatan')
+      .select('guru_id, minggu, dihantar_pada')
+      .eq('sekolah_id', sekolahId)
+      .eq('minggu', minggu)
+      .then(({ data, error }) => {
+        if (error || !hidup) return;
+        const peta = new Map<string, string>();
+        for (const p of (data ?? []) as unknown as { guru_id: string; dihantar_pada: string }[]) if ((peta.get(p.guru_id) ?? '') < p.dihantar_pada) peta.set(p.guru_id, p.dihantar_pada);
+        setDiingatkan(peta);
+      });
+    return () => {
+      hidup = false;
+    };
+  }, [sekolahId, minggu, dalamTalian, versi]);
+
+  const muatSemula = useCallback(() => setVersi((v) => v + 1), []);
+  return { waktu, cuti, diingatkan, muatSemula };
 }

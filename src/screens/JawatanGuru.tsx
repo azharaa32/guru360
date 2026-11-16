@@ -55,7 +55,8 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
 
   const dipilih = guruId ? (guru ?? []).find((g) => g.pengguna_id === guruId) : undefined;
   const tahunan = (semua ?? []).filter((j) => j.tahun === tahun);
-  const milik = dipilih ? tahunan.filter((j) => j.guru_id === dipilih.pengguna_id) : [];
+  const milik = dipilih ? tahunan.filter((j) => j.guru_id === dipilih.pengguna_id && j.status !== 'ditolak') : [];
+  const ditolak = dipilih ? tahunan.filter((j) => j.guru_id === dipilih.pengguna_id && j.status === 'ditolak') : [];
 
   /** Jawatan dalam jobskop guru (bagi tahun dipilih) yang belum ditetapkan atau disahkan admin. */
   const belumSah = (idGuru: string): Jawatan[] => {
@@ -64,13 +65,13 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
     const sah = tahunan.filter((x) => x.guru_id === idGuru);
     return js.jawatan.filter((j) => !sah.some((d) => padanJawatan(d, j)));
   };
-  const sahkan = async (j: Jawatan) => {
+  const sahkan = async (j: Jawatan, status: 'sah' | 'ditolak' = 'sah') => {
     if (!dipilih || sibuk) return;
     setSibuk(true);
     setRalat(null);
     const { error } = await supabase
       .from('jawatan_guru')
-      .insert({ sekolah_id: sekolahId, guru_id: dipilih.pengguna_id, tahun, kod: j.kod ?? '', nama: j.nama.trim().slice(0, 160), butiran: (j.butiran ?? '').trim().toUpperCase().slice(0, 120) });
+      .insert({ sekolah_id: sekolahId, guru_id: dipilih.pengguna_id, tahun, kod: j.kod ?? '', nama: j.nama.trim().slice(0, 160), butiran: (j.butiran ?? '').trim().toUpperCase().slice(0, 120), status });
     setSibuk(false);
     if (error) setRalat(terjemahRalat(error.message));
     await muat();
@@ -134,7 +135,7 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
             ) : (
               <ul className="senarai-acara">
                 {guru.map((g) => {
-                  const j = tahunan.filter((x) => x.guru_id === g.pengguna_id);
+                  const j = tahunan.filter((x) => x.guru_id === g.pengguna_id && x.status !== 'ditolak');
                   const menunggu = belumSah(g.pengguna_id).length;
                   return (
                     <li key={g.pengguna_id}>
@@ -179,6 +180,11 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
                             {(j.kumpulan ?? []).reduce((n, k) => n + k.tugas.length, 0)} tugas
                           </span>
                         </span>
+                      </div>
+                      <div className="dua-butang">
+                        <button type="button" className="butang butang-garis butang-kecil" disabled={sibuk || !dalamTalian} onClick={() => void sahkan(j, 'ditolak')}>
+                          Tolak
+                        </button>
                         <button type="button" className="butang butang-utama butang-kecil" disabled={sibuk || !dalamTalian} onClick={() => void sahkan(j)}>
                           Sahkan
                         </button>
@@ -186,7 +192,33 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
                     </li>
                   ))}
                 </ul>
-                <p className="nota">Jika jawatan ini tidak betul, minta guru membuangnya daripada jobskop.</p>
+                <p className="nota">Jawatan yang ditolak kekal dalam jobskop guru dengan label "Ditolak admin sekolah" sehingga guru membuangnya.</p>
+              </section>
+            )}
+
+            {ditolak.length > 0 && (
+              <section className="bahagian" aria-labelledby="tajuk-ditolak">
+                <div className="baris-tajuk">
+                  <h2 id="tajuk-ditolak" className="label-bahagian">
+                    DITOLAK
+                  </h2>
+                  <span className="mono nota-kecil">{ditolak.length}</span>
+                </div>
+                <ul className="senarai-acara">
+                  {ditolak.map((j) => (
+                    <li key={j.id} className="kad kad-makluman">
+                      <div className="baris-ahli">
+                        <span className="acara-teks">
+                          <strong className="pecah">{j.butiran ? `${j.nama} ${j.butiran}` : j.nama}</strong>
+                          <span>{j.kod || 'Jawatan sendiri'}</span>
+                        </span>
+                        <button type="button" className="butang butang-garis butang-kecil" disabled={!dalamTalian} onClick={() => void padam(j.id)}>
+                          Batal tolak
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </section>
             )}
 

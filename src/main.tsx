@@ -11,6 +11,7 @@ import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
 import { useJawatanSaya } from './lib/jawatan';
 import { useMakluman } from './lib/makluman';
+import { usePeringatanSaya } from './lib/peringatan';
 import { useKeahlian } from './lib/sekolah';
 import { useSemakanSaya } from './lib/semakan';
 import { pautanEmel } from './lib/supabase';
@@ -63,6 +64,7 @@ function App() {
   const bersama = useCutiBersama(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
   const semakanSaya = useSemakanSaya(uidGuru, dalamTalian);
   const jawatanSaya = useJawatanSaya(uidGuru, dalamTalian);
+  const peringatan = usePeringatanSaya(uidGuru, dalamTalian);
   const mak = useMakluman(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
   const guruAktif = (sekolahId?: string) => keahlian.ahli.filter((a) => a.peranan === 'guru' && a.status === 'aktif' && (!sekolahId || a.sekolah_id === sekolahId)).length;
   const semuaCuti = useMemo(() => [...cutiSendiri.cuti, ...bersama.cuti], [cutiSendiri.cuti, bersama.cuti]);
@@ -76,14 +78,15 @@ function App() {
   );
 
   if (keadaan.status === 'memuat') return <Memuat />;
-  if (pautan)
+  // Pautan peringatan hanya membuka aplikasi: jika sudah log masuk, ia tidak diperlukan.
+  if (pautan && !(pautan.jenis === 'magiclink' && sesi))
     return (
       <div className="apl">
         {jalur}
         <TerimaPautan
           pautan={pautan}
           berjaya={() => {
-            mulaTetapKata();
+            if (pautan.jenis !== 'magiclink') mulaTetapKata();
             setPautan(null);
           }}
           tutup={() => setPautan(null)}
@@ -143,7 +146,7 @@ function App() {
         ) : laluan === 'jawatan' && adminAktif && keahlian.sekolah ? (
           <JawatanGuru sekolahId={keahlian.sekolah.id} dalamTalian={dalamTalian} guruId={param[0]} />
         ) : laluan === 'dokumen' && adminAktif && keahlian.sekolah ? (
-          <DokumenGuru sekolahId={keahlian.sekolah.id} dalamTalian={dalamTalian} guruId={param[0]} dokId={param[1]} />
+          <DokumenGuru sekolahId={keahlian.sekolah.id} namaSekolah={keahlian.sekolah.nama} templat={templat.templat} logo={templat.logo} dalamTalian={dalamTalian} guruId={param[0]} dokId={param[1]} />
         ) : laluan === 'semak' && adminAktif && keahlian.sekolah ? (
           <SemakRph sekolahId={keahlian.sekolah.id} negeri={keahlian.sekolah.negeri} dalamTalian={dalamTalian} tarikh={param[0]} guruId={param[1]} />
         ) : laluan === 'makluman' && param[0] === 'semua' && keahlian.ibuPejabat ? (
@@ -211,6 +214,7 @@ function App() {
           kal={kal}
           waktu={jadual.waktu}
           rph={rph.rph}
+          peringatan={{ minggu: [...new Set(peringatan.peringatan.map((x) => x.minggu))].sort(), tandaBaca: () => void peringatan.tandaBaca(), dalamTalian }}
           makluman={{
             jumlah: mak.makluman.length,
             belumBaca: mak.makluman.filter((m) => !mak.status.some((x) => x.makluman_id === m.id && x.guru_id === uid)).length,

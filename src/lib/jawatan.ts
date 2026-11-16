@@ -11,9 +11,11 @@ export interface JawatanDitetapkan {
   kod: string;
   nama: string;
   butiran: string;
+  /** 'ditolak': guru menambah jawatan ini sendiri dan admin menolaknya. Salinan lama dalam telefon mungkin tiada nilai ini. */
+  status?: 'sah' | 'ditolak';
 }
 
-export const LAJUR_JAWATAN = 'id, sekolah_id, guru_id, tahun, kod, nama, butiran';
+export const LAJUR_JAWATAN = 'id, sekolah_id, guru_id, tahun, kod, nama, butiran, status';
 
 /** Guru: jawatan yang ditetapkan admin kepada saya. Salinan terakhir disimpan dalam telefon. */
 export function useJawatanSaya(uid: string | null, dalamTalian: boolean): JawatanDitetapkan[] {

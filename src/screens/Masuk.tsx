@@ -230,10 +230,11 @@ export function KataLaluanBaharu({ selesai }: { selesai: () => void }) {
 }
 
 /** Pautan daripada emel jemputan atau set semula kata laluan: kod ditukar menjadi sesi hanya apabila butang ditekan. */
-export function TerimaPautan({ pautan, berjaya, tutup }: { pautan: { tokenHash: string; jenis: 'invite' | 'recovery' }; berjaya: () => void; tutup: () => void }) {
+export function TerimaPautan({ pautan, berjaya, tutup }: { pautan: { tokenHash: string; jenis: 'invite' | 'recovery' | 'magiclink' }; berjaya: () => void; tutup: () => void }) {
   const [sibuk, setSibuk] = useState(false);
   const [ralat, setRalat] = useState<string | null>(null);
   const jemputan = pautan.jenis === 'invite';
+  const buka = pautan.jenis === 'magiclink';
   const teruskan = async () => {
     setSibuk(true);
     setRalat(null);
@@ -245,7 +246,9 @@ export function TerimaPautan({ pautan, berjaya, tutup }: { pautan: { tokenHash: 
             ? terjemahRalat(error.message)
             : jemputan
               ? 'Pautan jemputan ini sudah luput atau sudah digunakan. Minta admin sekolah menghantar semula jemputan.'
-              : 'Pautan ini sudah luput atau sudah digunakan. Minta pautan baharu melalui "Lupa kata laluan".',
+              : buka
+                ? 'Pautan ini sudah luput atau sudah digunakan. Log masuk seperti biasa dengan emel dan kata laluan anda.'
+                : 'Pautan ini sudah luput atau sudah digunakan. Minta pautan baharu melalui "Lupa kata laluan".',
         );
         setSibuk(false);
         return;
@@ -260,8 +263,8 @@ export function TerimaPautan({ pautan, berjaya, tutup }: { pautan: { tokenHash: 
   return (
     <Jenama>
       <div className="kad borang">
-        <h2>{jemputan ? 'Jemputan Guru360' : 'Set semula kata laluan'}</h2>
-        <p>{jemputan ? 'Anda dijemput menyertai Guru360. Tekan butang di bawah, kemudian tetapkan kata laluan anda.' : 'Tekan butang di bawah, kemudian tetapkan kata laluan baharu.'}</p>
+        <h2>{jemputan ? 'Jemputan Guru360' : buka ? 'Peringatan Guru360' : 'Set semula kata laluan'}</h2>
+        <p>{jemputan ? 'Anda dijemput menyertai Guru360. Tekan butang di bawah, kemudian tetapkan kata laluan anda.' : buka ? 'Admin sekolah anda menghantar peringatan. Tekan butang di bawah untuk membuka Guru360.' : 'Tekan butang di bawah, kemudian tetapkan kata laluan baharu.'}</p>
         <div aria-live="polite">
           {ralat && (
             <p className="mesej mesej-ralat" role="alert">
@@ -270,7 +273,7 @@ export function TerimaPautan({ pautan, berjaya, tutup }: { pautan: { tokenHash: 
           )}
         </div>
         <button type="button" className="butang butang-utama" disabled={sibuk} onClick={() => void teruskan()}>
-          {sibuk ? 'Sebentar…' : jemputan ? 'Terima jemputan' : 'Teruskan'}
+          {sibuk ? 'Sebentar…' : jemputan ? 'Terima jemputan' : buka ? 'Buka Guru360' : 'Teruskan'}
         </button>
         {ralat && (
           <button

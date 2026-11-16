@@ -203,6 +203,8 @@ export interface ButiranAhli {
 export const senaraiAhli = () => panggil<{ senarai: ButiranAhli[] }>('urus-ahli', { aksi: 'senarai' });
 export const jemputGuru = (emel: string) => panggil<{ emel_dihantar: boolean }>('urus-ahli', { aksi: 'jemput', emel });
 export const hantarSemulaJemputan = (ahliId: string) => panggil('urus-ahli', { aksi: 'hantar_semula', ahli_id: ahliId });
+/** Admin sekolah: hantar peringatan RPH (dalam aplikasi dan emel) kepada guru bagi satu minggu. */
+export const ingatkanGuru = (guruIds: string[], minggu: string) => panggil<{ dihantar: number; emel: number; dilangkau: number }>('urus-ahli', { aksi: 'ingatkan', guru_ids: guruIds, minggu });
 export const keluarkanGuru = (ahliId: string) => panggil('urus-ahli', { aksi: 'keluarkan', ahli_id: ahliId });
 export const mintaKeluar = (minta: boolean) => panggil('urus-ahli', { aksi: minta ? 'minta_keluar' : 'batal_minta' });
 

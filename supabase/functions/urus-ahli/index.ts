@@ -1,9 +1,10 @@
-// Keahlian sekolah: admin menjemput dan mengeluarkan guru; guru meminta dikeluarkan.
+// Keahlian sekolah: admin menjemput, mengeluarkan dan mengingatkan guru; guru meminta dikeluarkan.
 // Semua penulisan jadual ahli berlaku di sini dengan kunci perkhidmatan, selepas pemanggil disemak.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const APL = 'https://azharaa32.github.io/guru360/';
 const HAD_AHLI = 300;
+const HAD_INGAT = 60;
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -112,6 +113,36 @@ Deno.serve(async (req: Request) => {
     if (ada.data) await admin.from('profil').update(sek).eq('id', uidGuru);
     else await admin.from('profil').insert({ id: uidGuru, ...sek });
     return balas({ ok: true, emel_dihantar: emelDihantar });
+  }
+
+  if (aksi === 'ingatkan') {
+    // Peringatan RPH: satu baris dalam jadual peringatan (muncul dalam aplikasi guru) dan satu emel pautan masuk.
+    const minggu = typeof badan.minggu === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(badan.minggu) && !Number.isNaN(Date.parse(badan.minggu)) ? badan.minggu : '';
+    const diminta = Array.isArray(badan.guru_ids) ? [...new Set(badan.guru_ids.filter((x): x is string => typeof x === 'string' && UUID.test(x)))] : [];
+    if (!minggu) return ralat('Minggu tidak sah.');
+    if (diminta.length === 0 || diminta.length > HAD_INGAT) return ralat(`Pilih antara 1 hingga ${HAD_INGAT} guru.`);
+    const a = await admin.from('ahli').select('pengguna_id').eq('sekolah_id', sekolah.id).eq('peranan', 'guru').eq('status', 'aktif').in('pengguna_id', diminta);
+    if (a.error) return sibuk();
+    const sah = ((a.data ?? []) as { pengguna_id: string }[]).map((x) => x.pengguna_id);
+    if (sah.length === 0) return ralat('Guru ini tidak lagi aktif di sekolah anda. Muat semula senarai.');
+    // Guru yang sudah diingatkan dalam 20 jam lepas dilangkau, supaya butang tidak boleh membanjiri guru dengan emel.
+    const baru = await admin.from('peringatan').select('guru_id').eq('sekolah_id', sekolah.id).in('guru_id', sah).gte('dihantar_pada', new Date(Date.now() - 20 * 3600 * 1000).toISOString());
+    if (baru.error) return sibuk();
+    const sudah = new Set(((baru.data ?? []) as { guru_id: string }[]).map((x) => x.guru_id));
+    const hantar = sah.filter((id) => !sudah.has(id));
+    if (hantar.length === 0) return balas({ ok: true, dihantar: 0, emel: 0, dilangkau: sudah.size });
+    const masuk = await admin.from('peringatan').insert(hantar.map((id) => ({ sekolah_id: sekolah.id, guru_id: id, minggu, dihantar_oleh: uid })));
+    if (masuk.error) return sibuk();
+    let emel = 0;
+    for (const id of hantar) {
+      const u = await admin.auth.admin.getUserById(id);
+      const p = u.data.user;
+      // Guru yang belum menerima jemputan tidak dihantar emel peringatan; peringatan menunggunya dalam aplikasi.
+      if (u.error || !p?.email || !p.email_confirmed_at) continue;
+      const e = await admin.auth.signInWithOtp({ email: p.email, options: { shouldCreateUser: false, emailRedirectTo: APL } });
+      if (!e.error) emel += 1;
+    }
+    return balas({ ok: true, dihantar: hantar.length, emel, dilangkau: sudah.size });
   }
 
   if (aksi === 'hantar_semula' || aksi === 'keluarkan') {

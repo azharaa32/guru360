@@ -1,8 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { HasilPdf, usePdf } from '../components/Pdf';
 import { KepalaKembali } from '../components/Rangka';
+import { useGambar } from '../lib/gambar';
 import { tarikhMesra } from '../lib/kalendar';
 import { senaraiAhli, type ButiranAhli } from '../lib/sekolah';
+import { gambarOpr, pelanPdf, type DokumenAsing } from '../lib/pdfDokumen';
 import { supabase, terjemahRalat } from '../lib/supabase';
+import { TEMPLAT_KOSONG, type Logo, type Templat } from '../lib/templat';
 
 interface RingkasDok {
   id: string;
@@ -100,8 +104,51 @@ function Butiran({ o }: { o: Record<string, unknown> }) {
   );
 }
 
-/** Admin sekolah: baca dokumen dan program guru sekolahnya. Baca sahaja; tiada butang ubah. */
-export function DokumenGuru({ sekolahId, dalamTalian, guruId, dokId }: { sekolahId: string; dalamTalian: boolean; guruId?: string; dokId?: string }) {
+/** Gambar OPR dan butang jana PDF bagi satu dokumen guru, memakai kepala surat sekolah. */
+function PdfDokumen({ d, templat, logo, namaSekolah, namaGuru }: { d: DokumenAsing; templat: Templat | null; logo: Logo; namaSekolah: string; namaGuru: string }) {
+  const pdf = usePdf();
+  const laluan = gambarOpr(d);
+  const url = useGambar(laluan);
+  const t = templat ?? TEMPLAT_KOSONG;
+  const pelan = pelanPdf(d, { nama_sekolah: t.nama_sekolah || namaSekolah, alamat: t.alamat, telefon: t.telefon, emel: t.emel, kod_sekolah: t.kod_sekolah, logoKiri: logo.kiri, logoKanan: logo.kanan }, namaGuru);
+  return (
+    <>
+      {laluan.length > 0 && (
+        <section className="semak-bahagian">
+          <span className="label-bahagian">GAMBAR</span>
+          <ul className="grid-gambar">
+            {laluan.map((g, i) => (
+              <li key={g} className="petak-gambar">
+                {url[g] ? <img src={url[g]!} alt={`Gambar ${i + 1} OPR`} /> : <span className="gambar-tiada">{g in url ? 'Belum dihantar oleh guru' : 'Memuat…'}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {pelan && (
+        <>
+          <button type="button" className="butang butang-utama" disabled={pdf.menjana} onClick={() => void pdf.jana(pelan.bina, pelan.namaFail, pelan.tajuk)}>
+            {pdf.menjana ? 'Menjana…' : 'Jana PDF'}
+          </button>
+          <HasilPdf pdf={pdf.pdf} ralat={pdf.ralat} />
+        </>
+      )}
+    </>
+  );
+}
+
+interface PropsDokumen {
+  sekolahId: string;
+  namaSekolah: string;
+  templat: Templat | null;
+  logo: Logo;
+  dalamTalian: boolean;
+  guruId?: string;
+  dokId?: string;
+}
+
+/** Admin sekolah: baca dokumen dan program guru sekolahnya, dan jana PDFnya. Baca sahaja; tiada butang ubah. */
+export function DokumenGuru({ sekolahId, namaSekolah, templat, logo, dalamTalian, guruId, dokId }: PropsDokumen) {
   const [dok, setDok] = useState<RingkasDok[] | null>(null);
   const [program, setProgram] = useState<RingkasProgram[]>([]);
   const [guru, setGuru] = useState<ButiranAhli[] | null>(null);
@@ -200,7 +247,7 @@ export function DokumenGuru({ sekolahId, dalamTalian, guruId, dokId }: { sekolah
                 })}
               </ul>
             )}
-            <p className="nota">Anda boleh membaca semua dokumen guru sekolah ini tetapi tidak boleh mengubahnya. RPH dibaca di skrin Semak RPH.</p>
+            <p className="nota">Anda boleh membaca semua dokumen guru sekolah ini dan menjana PDFnya, tetapi tidak boleh mengubahnya. RPH dibaca di skrin Semak RPH.</p>
           </>
         )}
 
@@ -272,8 +319,8 @@ export function DokumenGuru({ sekolahId, dalamTalian, guruId, dokId }: { sekolah
                   </section>
                 ))
             )}
-            {isi && Array.isArray(isi.isi.gambar) && (isi.isi.gambar as unknown[]).length > 0 && (
-              <p className="nota">Dokumen ini ada {(isi.isi.gambar as unknown[]).length} gambar. Gambar tidak dipaparkan di sini; minta guru berkongsi OPR yang dijana.</p>
+            {isi && isi.id === dibuka.id && !kosong(isi.isi) && (
+              <PdfDokumen key={dibuka.id} d={{ id: dibuka.id, guru_id: dibuka.guru_id, jenis: dibuka.jenis, tajuk: dibuka.tajuk, isi: isi.isi }} templat={templat} logo={logo} namaSekolah={namaSekolah} namaGuru={nama(dipilih!)} />
             )}
           </article>
         )}
