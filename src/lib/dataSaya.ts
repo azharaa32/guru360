@@ -1,6 +1,6 @@
 import { supabase, terjemahRalat } from './supabase';
 
-const JADUAL = ['profil', 'templat', 'jadual_waktu', 'cuti_sendiri', 'rph', 'program', 'dokumen'] as const;
+const JADUAL = ['profil', 'jadual_waktu', 'cuti_sendiri', 'rph', 'program', 'dokumen'] as const;
 const BALDI = 'fail';
 
 /** Semua laluan fail guru dalam storan (logo dan gambar OPR), termasuk dalam subfolder. */
@@ -21,7 +21,7 @@ async function senaraiFail(folder: string, dalam = 0): Promise<string[]> {
 export async function muatTurunData(uid: string, emel: string): Promise<Blob> {
   const data: Record<string, unknown> = { aplikasi: 'Guru360', dieksport_pada: new Date().toISOString(), emel };
   for (const j of JADUAL) {
-    const { data: baris, error } = await supabase.from(j).select('*').eq(j === 'profil' || j === 'templat' ? 'id' : 'guru_id', uid);
+    const { data: baris, error } = await supabase.from(j).select('*').eq(j === 'profil' ? 'id' : 'guru_id', uid);
     if (error) throw new Error(terjemahRalat(error.message));
     data[j] = baris;
   }
