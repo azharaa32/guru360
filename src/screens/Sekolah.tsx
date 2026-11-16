@@ -3,16 +3,20 @@ import { Kepala } from '../components/Rangka';
 import {
   ciptaSekolah,
   hantarSemulaJemputan,
+  janaKodDaftar,
   jemputGuru,
   keluarkanGuru,
   NAMA_STATUS,
   namaPeranan,
+  padamKodDaftar,
   padamSekolah,
   putusSekolah,
   senaraiAhli,
+  senaraiKodDaftar,
   senaraiMenunggu,
   type ButiranAhli,
   type Keahlian,
+  type KodDaftar,
   type Permohonan,
   type Sekolah,
 } from '../lib/sekolah';
@@ -292,6 +296,112 @@ function GuruSekolah({ dalamTalian, muatSemula }: { dalamTalian: boolean; muatSe
 }
 
 /** Skrin utama akaun pengurusan (admin sekolah dan ibu pejabat). Akaun ini tidak mengajar. */
+/** Ibu pejabat: jana kod pendaftaran sekali guna untuk sekolah yang mahu mendaftar sendiri. */
+function KodPendaftaran({ dalamTalian }: { dalamTalian: boolean }) {
+  const [senarai, setSenarai] = useState<KodDaftar[] | null>(null);
+  const [catatan, setCatatan] = useState('');
+  const [sibuk, setSibuk] = useState(false);
+  const [mesej, setMesej] = useState<{ jenis: 'ok' | 'ralat'; teks: string } | null>(null);
+  const [sahPadam, setSahPadam] = useState<string | null>(null);
+
+  const muat = useCallback(async () => {
+    const h = await senaraiKodDaftar();
+    if (h.ok) setSenarai(h.senarai);
+    else setMesej({ jenis: 'ralat', teks: h.ralat });
+  }, []);
+  useEffect(() => {
+    if (dalamTalian) void muat();
+  }, [dalamTalian, muat]);
+
+  const jana = async (e: FormEvent) => {
+    e.preventDefault();
+    if (sibuk) return;
+    setSibuk(true);
+    setMesej(null);
+    const h = await janaKodDaftar(catatan);
+    setSibuk(false);
+    if (h.ok) {
+      setCatatan('');
+      setMesej({ jenis: 'ok', teks: `Kod baharu: ${h.kod}. Beri kod ini kepada sekolah berkenaan.` });
+      await muat();
+    } else setMesej({ jenis: 'ralat', teks: h.ralat });
+  };
+  const salin = async (kod: string) => {
+    try {
+      await navigator.clipboard.writeText(kod);
+      setMesej({ jenis: 'ok', teks: `Kod ${kod} disalin.` });
+    } catch {
+      setMesej({ jenis: 'ralat', teks: 'Tidak dapat menyalin. Tekan lama pada kod untuk menyalinnya.' });
+    }
+  };
+  const padam = async (id: string) => {
+    setSahPadam(null);
+    const h = await padamKodDaftar(id);
+    if (!h.ok) setMesej({ jenis: 'ralat', teks: h.ralat });
+    await muat();
+  };
+
+  const belum = (senarai ?? []).filter((k) => !k.digunakan_pada);
+  const sudah = (senarai ?? []).length - belum.length;
+  return (
+    <section className="bahagian" aria-labelledby="tajuk-kod">
+      <div className="baris-tajuk">
+        <h2 id="tajuk-kod" className="label-bahagian">
+          KOD PENDAFTARAN SEKOLAH
+        </h2>
+        <span className="mono nota-kecil">{senarai ? `${belum.length} belum guna · ${sudah} sudah` : '-'}</span>
+      </div>
+      <form className="kad borang borang-sekolah" onSubmit={jana}>
+        <p className="nota">Sekolah yang mahu mendaftar sendiri perlu satu kod. Setiap kod sekali guna. Sekolah itu masih menunggu kelulusan anda selepas mendaftar.</p>
+        <div className="medan">
+          <label htmlFor="kod-catatan">Untuk sekolah mana (pilihan)</label>
+          <input id="kod-catatan" value={catatan} maxLength={120} onChange={(e) => setCatatan(e.target.value)} />
+        </div>
+        <div aria-live="polite">
+          {mesej && (
+            <p className={`mesej mesej-${mesej.jenis}`} role={mesej.jenis === 'ralat' ? 'alert' : 'status'}>
+              {mesej.teks}
+            </p>
+          )}
+        </div>
+        <button type="submit" className="butang butang-garis" disabled={sibuk || !dalamTalian}>
+          {sibuk ? 'Sebentar…' : 'Jana kod baharu'}
+        </button>
+      </form>
+      {belum.length > 0 && (
+        <ul className="senarai-acara">
+          {belum.map((k) => (
+            <li key={k.id} className="kad kad-makluman">
+              <div className="baris-ahli">
+                <span className="acara-teks">
+                  <strong className="mono kod-besar">{k.kod}</strong>
+                  <span className="pecah">
+                    {k.catatan || 'Tiada catatan'} · dijana {tarikhPendek(k.dicipta_pada)}
+                  </span>
+                </span>
+              </div>
+              <div className="dua-butang">
+                {sahPadam === k.id ? (
+                  <button type="button" className="butang butang-bahaya butang-kecil" onClick={() => void padam(k.id)}>
+                    Sahkan padam
+                  </button>
+                ) : (
+                  <button type="button" className="butang butang-garis butang-kecil" onClick={() => setSahPadam(k.id)}>
+                    Padam
+                  </button>
+                )}
+                <button type="button" className="butang butang-utama butang-kecil" onClick={() => void salin(k.kod)}>
+                  Salin kod
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /** Ibu pejabat: padam sekolah bersama semua datanya. Tidak boleh dipulihkan, jadi kod sekolah mesti ditaip semula. */
 function PadamSekolah({ keahlian, dalamTalian, muatSemula }: { keahlian: Keahlian; dalamTalian: boolean; muatSemula: () => void }) {
   const [buka, setBuka] = useState(false);
@@ -618,6 +728,8 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula, makluman, 
         {keahlian.ibuPejabat && <SenaraiMenunggu dalamTalian={dalamTalian} muatSemula={muatSemula} />}
 
         {keahlian.ibuPejabat && <PapanHq keahlian={keahlian} makluman={makluman} status={status} dalamTalian={dalamTalian} />}
+
+        {keahlian.ibuPejabat && <KodPendaftaran dalamTalian={dalamTalian} />}
 
         {keahlian.ibuPejabat && <CiptaSekolah muatSemula={muatSemula} />}
 

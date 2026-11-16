@@ -120,6 +120,8 @@ export interface DataSekolahBaru {
   negeri: string;
   admin_nama: string;
   emel: string;
+  /** Kod pendaftaran sekali guna daripada ibu pejabat; hanya untuk pendaftaran sendiri. */
+  kod_daftar?: string;
 }
 
 export interface Permohonan {
@@ -184,4 +186,36 @@ export async function ahliSekolahHq(sekolahId: string): Promise<Hasil<{ senarai:
   const { data, error } = await supabase.rpc('butiran_sekolah_hq', { p_sekolah: sekolahId });
   if (error) return { ok: false, ralat: 'Senarai guru tidak dapat dimuat.' };
   return { ok: true, senarai: (data ?? []) as unknown as ButiranAhli[] };
+}
+
+/** Kod pendaftaran sekali guna untuk borang Daftar sekolah. Hanya ibu pejabat boleh membaca dan menjananya. */
+export interface KodDaftar {
+  id: string;
+  kod: string;
+  catatan: string;
+  dicipta_pada: string;
+  digunakan_pada: string | null;
+  sekolah_id: string | null;
+}
+
+const ABJAD_KOD = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // tanpa I, O, 0 dan 1 supaya tidak tersalah baca
+
+export async function senaraiKodDaftar(): Promise<Hasil<{ senarai: KodDaftar[] }>> {
+  const { data, error } = await supabase.from('kod_daftar').select('id, kod, catatan, dicipta_pada, digunakan_pada, sekolah_id');
+  if (error) return { ok: false, ralat: 'Senarai kod tidak dapat dimuat.' };
+  return { ok: true, senarai: ((data ?? []) as unknown as KodDaftar[]).sort((a, b) => b.dicipta_pada.localeCompare(a.dicipta_pada)) };
+}
+
+export async function janaKodDaftar(catatan: string): Promise<Hasil<{ kod: string }>> {
+  if (!navigator.onLine) return { ok: false, ralat: 'Tiada sambungan internet. Cuba lagi apabila ada talian.' };
+  const rawak = crypto.getRandomValues(new Uint8Array(8));
+  const kod = Array.from(rawak, (b) => ABJAD_KOD[b % ABJAD_KOD.length]).join('');
+  const { error } = await supabase.from('kod_daftar').insert({ kod, catatan: catatan.replace(/\s+/g, ' ').trim().slice(0, 120) });
+  if (error) return { ok: false, ralat: 'Kod tidak dapat dijana. Cuba lagi.' };
+  return { ok: true, kod };
+}
+
+export async function padamKodDaftar(id: string): Promise<Hasil> {
+  const { error } = await supabase.from('kod_daftar').delete().in('id', [id]);
+  return error ? { ok: false, ralat: 'Kod tidak dapat dipadam.' } : { ok: true };
 }

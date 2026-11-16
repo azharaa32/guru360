@@ -2404,3 +2404,10 @@ a.acara-butang {
 .baca-senarai li {
   overflow-wrap: anywhere;
 }
+
+/* Keselamatan: kod pendaftaran sekolah */
+.kod-besar {
+  font-size: 1.25rem;
+  letter-spacing: 0.12em;
+  user-select: all;
+}

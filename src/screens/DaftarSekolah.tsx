@@ -14,7 +14,10 @@ export function BorangSekolah({
   hantar,
   selesai,
   catatan,
+  perluKod = false,
 }: {
+  /** Pendaftaran sendiri memerlukan kod pendaftaran daripada ibu pejabat. */
+  perluKod?: boolean;
   awalan: string;
   butang: string;
   hantar: (d: DataSekolahBaru) => Promise<Hasil>;
@@ -46,6 +49,27 @@ export function BorangSekolah({
 
   return (
     <form className="borang borang-sekolah" onSubmit={hantarBorang}>
+      {perluKod && (
+        <div className="medan">
+          <label htmlFor={`${awalan}-kod-daftar`}>Kod pendaftaran</label>
+          <input
+            id={`${awalan}-kod-daftar`}
+            className="mono"
+            value={d.kod_daftar ?? ''}
+            onChange={(e) => setD((x) => ({ ...x, kod_daftar: e.target.value.toUpperCase() }))}
+            required
+            minLength={8}
+            maxLength={12}
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            aria-describedby={`${awalan}-kod-daftar-bantuan`}
+          />
+          <p className="bantuan" id={`${awalan}-kod-daftar-bantuan`}>
+            Lapan aksara, diberi oleh ibu pejabat. Setiap kod hanya boleh digunakan sekali.
+          </p>
+        </div>
+      )}
       {medan('nama', 'Nama sekolah', { autoComplete: 'organization', autoCapitalize: 'characters' })}
       {medan('kod', 'Kod sekolah', { autoCapitalize: 'characters', spellCheck: false, maxLength: 20, minLength: 3 })}
       <div className="medan">
@@ -95,9 +119,10 @@ export function DaftarSekolah({ kepala, daftar, kembali }: { kepala: ReactNode; 
   return (
     <div className="kad borang">
       {kepala}
-      <p className="nota">Untuk pengurusan sekolah sahaja. Guru biasa tidak mendaftar di sini; guru menyertai melalui emel jemputan daripada admin sekolah.</p>
+      <p className="nota">Untuk pengurusan sekolah sahaja, dengan kod pendaftaran daripada ibu pejabat. Guru biasa tidak mendaftar di sini; guru menyertai melalui emel jemputan daripada admin sekolah.</p>
       <BorangSekolah
         awalan="daftar"
+        perluKod
         butang="Daftar sekolah"
         hantar={daftar}
         selesai={setHantar}

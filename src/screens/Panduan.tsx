@@ -36,7 +36,7 @@ const MODUL_ADMIN: Modul[] = [
 ];
 
 const MODUL_HQ: Modul[] = [
-  { nama: 'Kelulusan dan cipta sekolah', isi: 'Luluskan atau tolak sekolah yang mendaftar sendiri, atau cipta sekolah dan jemput adminnya.', ke: '#/' },
+  { nama: 'Kelulusan dan cipta sekolah', isi: 'Jana kod pendaftaran untuk sekolah yang mahu mendaftar sendiri, luluskan atau tolak permohonannya, atau cipta sekolah dan jemput adminnya.', ke: '#/' },
   { nama: 'Papan semua sekolah', isi: 'Status ringkas setiap sekolah minggu ini. Tekan sekolah untuk membaca RPH gurunya.', ke: '#/' },
   { nama: 'Makluman semua sekolah', isi: 'Makluman dan tindakan kepada guru di semua sekolah.', ke: '#/makluman/semua' },
   { nama: 'Cuti semua sekolah', isi: 'Cuti yang muncul dalam takwim semua guru di semua sekolah.', ke: '#/cuti/semua' },

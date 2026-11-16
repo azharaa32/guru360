@@ -38,6 +38,7 @@ Repositori ini awam. Hanya kunci **awam** Supabase berada dalam kod. Jangan masu
 - Kunci perkhidmatan hanya digunakan di dalam fungsi pelayan, selepas pemanggil disemak.
 - Kunci SMTP hanya disimpan di papan pemuka Supabase.
 - Pendaftaran akaun terbuka dimatikan; akaun dicipta melalui pendaftaran sekolah atau jemputan sahaja.
+- Borang Daftar sekolah hanya diterima bersama kod pendaftaran sekali guna yang dijana ibu pejabat.
 
 ## Tetapan Supabase yang tidak berada dalam repositori
 
