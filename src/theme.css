@@ -2253,9 +2253,11 @@ a.acara-butang {
 }
 
 .panduan-teks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--hijau);
   font-weight: 600;
-  padding: 8px 0;
 }
 
 .panduan-nota li {
