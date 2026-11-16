@@ -4,7 +4,7 @@ import { KepalaKembali } from '../components/Rangka';
 import type { Profil } from '../lib/akaun';
 import { useSimpanAuto } from '../lib/auto';
 import type { Dokumen } from '../lib/dokumen';
-import { NAMA_JENIS, bilTugas, dariMysg, isiJobskop, jobskopKosong, kemasJawatan, muatMysg, namaPenuh, type DataMysg, type IsiJobskop, type Jawatan, type JenisPortfolio, type PortfolioMysg } from '../lib/jobskop';
+import { NAMA_JENIS, NAMA_PERINGKAT, bilTugas, dariMysg, ingatPeringkat, isiJobskop, jobskopKosong, kemasJawatan, muatMysg, namaPenuh, peringkatKod, peringkatTerakhir, type Peringkat, type DataMysg, type IsiJobskop, type Jawatan, type JenisPortfolio, type PortfolioMysg } from '../lib/jobskop';
 import { padanJawatan, type JawatanDitetapkan } from '../lib/jawatan';
 import type { KepalaSurat } from '../lib/pdf';
 import { TEMPLAT_KOSONG, type Logo, type Templat } from '../lib/templat';
@@ -62,7 +62,7 @@ export function JobskopUtama(p: Asas) {
   const [menambah, setMenambah] = useState<string | null>(null);
   const tambahDitetapkan = async (d: JawatanDitetapkan) => {
     setMenambah(d.id);
-    const mysg = await muatMysg().catch(() => null);
+    const mysg = await muatMysg(peringkatKod(d.kod)).catch(() => null);
     const port = mysg?.portfolio.find((x) => x.kod === d.kod);
     const baharu: Jawatan = port ? { ...dariMysg(port, port.kumpulan.map((_, i) => i)), butiran: d.butiran } : { id: d.id, kod: d.kod, nama: d.nama, butiran: d.butiran, kumpulan: [] };
     ubah({ jawatan: [...isi.jawatan, port ? kemasJawatan(baharu) : baharu] });
@@ -77,7 +77,7 @@ export function JobskopUtama(p: Asas) {
         (await import('../lib/pdf')).pdfJobskop(kepala, {
           tahun: isi.tahun,
           nama: (p.profil?.nama ?? '').toUpperCase(),
-          jawatan: isi.jawatan.map((j) => ({ nama: namaPenuh(j).toUpperCase(), kumpulan: j.kumpulan })),
+          jawatan: isi.jawatan.map((j) => ({ kod: j.kod, nama: namaPenuh(j).toUpperCase(), kumpulan: j.kumpulan })),
           disahkan: { nama: isi.disahkan.nama.trim().toUpperCase(), jawatan: isi.disahkan.jawatan.trim().toUpperCase() },
         }),
       `jobskop-${isi.tahun}.pdf`,
@@ -87,7 +87,7 @@ export function JobskopUtama(p: Asas) {
 
   return (
     <>
-      <KepalaKembali ke="#/" labelKembali="Kembali ke Utama" tajuk="Jobskop" sub="Senarai tugas ikut MySG Sekolah Rendah" />
+      <KepalaKembali ke="#/" labelKembali="Kembali ke Utama" tajuk="Jobskop" sub="Senarai tugas ikut MySG KPM" />
       <main className="isi">
         {ditetapkan.length > 0 && (
           <section className="bahagian" aria-labelledby="tajuk-ditetapkan">
@@ -134,7 +134,7 @@ export function JobskopUtama(p: Asas) {
           ) : isi.jawatan.length === 0 ? (
             <section className="kad kad-garis-merah">
               <h3 className="kad-tajuk">Belum ada jawatan</h3>
-              <p>Pilih portfolio dan jawatankuasa yang anda pegang tahun ini. Senarai tugasnya diambil terus daripada MySG Sekolah Rendah KPM dan boleh diedit.</p>
+              <p>Pilih portfolio dan jawatankuasa yang anda pegang tahun ini. Senarai tugasnya diambil terus daripada MySG KPM (Sekolah Rendah atau Menengah) dan boleh diedit.</p>
             </section>
           ) : (
             <ul className="senarai-acara">
@@ -212,16 +212,25 @@ export function JobskopPilih(p: Asas) {
   // kod portfolio -> indeks kumpulan tugas yang dipilih
   const [pilih, setPilih] = useState<Record<string, number[]>>({});
 
+  const [peringkat, setPeringkat] = useState<Peringkat>(peringkatTerakhir);
+
   useEffect(() => {
     let hidup = true;
-    muatMysg().then(
+    setData(null);
+    muatMysg(peringkat).then(
       (d) => hidup && setData(d),
       () => hidup && setGagal(true),
     );
     return () => {
       hidup = false;
     };
-  }, []);
+  }, [peringkat]);
+  const tukarPeringkat = (p: Peringkat) => {
+    ingatPeringkat(p);
+    setPeringkat(p);
+    setBuka(null);
+    setPilih({});
+  };
 
   const kata = cari.trim().toLowerCase();
   const senarai = useMemo(() => {
@@ -255,8 +264,15 @@ export function JobskopPilih(p: Asas) {
 
   return (
     <>
-      <KepalaKembali ke="#/jobskop" labelKembali="Kembali ke Jobskop" tajuk="Tambah dari MySG" sub="MySG Sekolah Rendah KPM" />
+      <KepalaKembali ke="#/jobskop" labelKembali="Kembali ke Jobskop" tajuk="Tambah dari MySG" sub={`MySG ${NAMA_PERINGKAT[peringkat]} KPM`} />
       <main className="isi isi-berbar">
+        <div className="tab" role="group" aria-label="Peringkat sekolah">
+          {(['rendah', 'menengah'] as const).map((p) => (
+            <button key={p} type="button" aria-pressed={peringkat === p} onClick={() => tukarPeringkat(p)}>
+              {NAMA_PERINGKAT[p]}
+            </button>
+          ))}
+        </div>
         <p className="nota">Tanda portfolio yang anda pegang. Bagi jawatankuasa, pilih bahagian tugas yang berkenaan sahaja. Tugas boleh diedit selepas ditambah.</p>
         <div className="medan">
           <label htmlFor="j-cari">Cari</label>

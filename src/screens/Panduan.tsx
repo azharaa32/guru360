@@ -19,7 +19,7 @@ const MODUL: Modul[] = [
   { nama: 'Memo & Surat', isi: 'Empat templat: panggilan mesyuarat, kebenaran ibu bapa, surat iringan dan memo.', ke: '#/surat' },
   { nama: 'Minit Mesyuarat', isi: 'Catat kehadiran, perkara dan tindakan. Minit curai dijana sekali.', ke: '#/minit' },
   { nama: 'OPR', isi: 'Laporan satu halaman dengan sehingga empat gambar. Boleh dikongsi sebagai PDF atau JPEG.', ke: '#/opr' },
-  { nama: 'Jobskop', isi: 'Masukkan jawatan yang ditetapkan admin, atau tambah sendiri daripada MySG Sekolah Rendah. Admin mengesahkan jawatan anda.', ke: '#/jobskop' },
+  { nama: 'Jobskop', isi: 'Masukkan jawatan yang ditetapkan admin, atau tambah sendiri daripada MySG Sekolah Rendah atau Menengah. Admin mengesahkan jawatan anda.', ke: '#/jobskop' },
 ];
 
 const MULA_ADMIN: Langkah[] = [
@@ -131,7 +131,7 @@ export function Panduan({ peranan = 'guru', adminSekolah = false }: { peranan?: 
               <strong>Tulisan Jawi dan Arab</strong> belum boleh dicetak dalam PDF. Ia muncul sebagai tanda soal.
             </li>
             <li>
-              <strong>Tarikh bertanda *</strong> dalam takwim belum disahkan dengan dokumen rasmi KPM. Semak dengan takwim sekolah.
+              <strong>Takwim 2027</strong> mengikut Surat Siaran KPM Bil. 1 Tahun 2026. Tarikh bertanda * ialah cuti umum negeri yang belum disahkan dengan jadual rasmi JPM.
             </li>
             <li>
               <strong>Semakan admin.</strong> RPH yang disemak bertanda “Disemak” bersama ulasan. Jika isinya diubah, tanda itu gugur.

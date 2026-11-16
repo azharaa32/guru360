@@ -722,7 +722,7 @@ export async function pdfGambarPenuh(jpeg: Uint8Array, tajuk: string): Promise<U
 export interface JobskopPdf {
   tahun: number;
   nama: string;
-  jawatan: { nama: string; kumpulan: { tajuk: string; tugas: string[] }[] }[];
+  jawatan: { kod?: string; nama: string; kumpulan: { tajuk: string; tugas: string[] }[] }[];
   disahkan: { nama: string; jawatan: string };
 }
 
@@ -746,6 +746,8 @@ export async function pdfJobskop(k: KepalaSurat, j: JobskopPdf): Promise<Uint8Ar
   });
   d.tandatangan({ tajuk: 'Disediakan oleh:', nama: j.nama }, { tajuk: 'Disahkan oleh:', nama: j.disahkan.nama, jawatan: j.disahkan.jawatan });
   d.jarak(2);
-  d.baris('Senarai tugas berpandukan MySG: Garis Panduan Tadbir Urus Sekolah Rendah KPM.');
+  const menengah = j.jawatan.some((x) => /^[HPJ]M\d/.test(x.kod ?? ''));
+  const rendah = j.jawatan.some((x) => /^[HPJ]R\d/.test(x.kod ?? ''));
+  d.baris(`Senarai tugas berpandukan MySG: Garis Panduan Tadbir Urus Sekolah ${menengah && rendah ? 'Rendah dan Menengah' : menengah ? 'Menengah' : 'Rendah'} KPM.`);
   return d.siap();
 }

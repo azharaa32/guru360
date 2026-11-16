@@ -374,7 +374,7 @@ export function Cuti({ negeri, cuti, sedia, tertunda, simpanCuti, padamCuti, mod
 
         {adaSemak && (
           <p className="nota">
-            * Tarikh ini dikumpul daripada laman kedua dan perlu disahkan dengan surat siaran KPM atau jadual hari kelepasan am JPM. Jika berbeza, guna “Hari ganti” atau “Cuti peristiwa” untuk membetulkannya.
+            * Tarikh ini belum disahkan dengan dokumen rasmi (jadual hari kelepasan am JPM; bagi 2026, surat siaran KPM). Kalendar akademik dan cuti tambahan KPM 2027 sudah disemak dengan Surat Siaran KPM Bil. 1 Tahun 2026. Jika berbeza, guna “Hari ganti” atau “Cuti peristiwa” untuk membetulkannya.
           </p>
         )}
       </main>

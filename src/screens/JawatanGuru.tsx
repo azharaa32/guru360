@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { KepalaKembali } from '../components/Rangka';
 import { LAJUR_JAWATAN, padanJawatan, type JawatanDitetapkan } from '../lib/jawatan';
-import { NAMA_JENIS, muatMysg, namaPenuh, type IsiJobskop, type Jawatan, type JenisPortfolio, type PortfolioMysg } from '../lib/jobskop';
+import { NAMA_JENIS, NAMA_PERINGKAT, ingatPeringkat, muatMysg, namaPenuh, peringkatTerakhir, type IsiJobskop, type Jawatan, type JenisPortfolio, type Peringkat, type PortfolioMysg } from '../lib/jobskop';
 import { senaraiAhli, type ButiranAhli } from '../lib/sekolah';
 import { supabase, terjemahRalat } from '../lib/supabase';
 
@@ -14,6 +14,7 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
   const [semua, setSemua] = useState<JawatanDitetapkan[] | null>(null);
   const [guru, setGuru] = useState<ButiranAhli[] | null>(null);
   const [mysg, setMysg] = useState<PortfolioMysg[]>([]);
+  const [peringkat, setPeringkat] = useState<Peringkat>(peringkatTerakhir);
   const [ralat, setRalat] = useState<string | null>(null);
   const [kod, setKod] = useState('');
   const [butiran, setButiran] = useState('');
@@ -37,13 +38,20 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
     void senaraiAhli().then((h) => {
       if (hidup && h.ok) setGuru(h.senarai.filter((a) => a.peranan === 'guru' && a.status === 'aktif'));
     });
-    void muatMysg().then((d) => {
+    return () => {
+      hidup = false;
+    };
+  }, [dalamTalian, muat]);
+
+  useEffect(() => {
+    let hidup = true;
+    void muatMysg(peringkat).then((d) => {
       if (hidup) setMysg(d.portfolio);
     });
     return () => {
       hidup = false;
     };
-  }, [dalamTalian, muat]);
+  }, [peringkat]);
 
   const dipilih = guruId ? (guru ?? []).find((g) => g.pengguna_id === guruId) : undefined;
   const tahunan = (semua ?? []).filter((j) => j.tahun === tahun);
@@ -218,6 +226,22 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
 
             <form className="kad borang borang-sekolah" onSubmit={tetapkan}>
               <h2 className="kad-tajuk">Tetapkan jawatan</h2>
+              <div className="tab" role="group" aria-label="Peringkat sekolah">
+                {(['rendah', 'menengah'] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    aria-pressed={peringkat === p}
+                    onClick={() => {
+                      ingatPeringkat(p);
+                      setPeringkat(p);
+                      setKod('');
+                    }}
+                  >
+                    {NAMA_PERINGKAT[p]}
+                  </button>
+                ))}
+              </div>
               <div className="medan">
                 <label htmlFor="jawatan-kod">Portfolio atau jawatankuasa (MySG)</label>
                 <select id="jawatan-kod" value={kod} onChange={(e) => setKod(e.target.value)} required>

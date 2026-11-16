@@ -1,11 +1,13 @@
 // Kalendar persekolahan KPM dan hari kelepasan am, mengikut negeri.
 //
-// Sumber (dikumpul 14 November 2026; laman rasmi KPM dan JPM tidak dapat dicapai dari ruang kerja pembinaan):
-// - Kenyataan KPM, 3 Oktober 2026 (Berita RTM): sesi 2027 bermula 4 Jan 2027; tamat 2 Dis (Kump. A) dan 3 Dis (Kump. B).
-// - Kalendar Akademik Tahun 2027 dan jadual cuti tambahan perayaan, seperti disiarkan semula oleh ecentral.my.
-// - Jadual Hari Kelepasan Am Persekutuan dan Negeri 2027 (BKPP, JPM), seperti disiarkan semula oleh
-//   cutisekolah.com.my dan Human Resources Online (25 Ogos 2026).
-// Entri bertanda `semak` perlu disahkan dengan dokumen rasmi sebelum keluaran.
+// Sumber:
+// - Kalendar akademik dan cuti tambahan perayaan 2027: Surat Siaran Kementerian Pendidikan Bilangan 1 Tahun 2026,
+//   "Kalendar Akademik Tahun 2027", ruj. KPM.100-1/3/2 JLD 14 (11), bertarikh 2 Oktober 2026 (Lampiran A, B dan C).
+//   Disemak dengan dokumen rasmi pada 16 November 2026. Surat itu juga menetapkan sesi 2028 bermula 3 Januari 2028.
+// - Hari kelepasan am 2027: Jadual Hari Kelepasan Am Persekutuan dan Negeri 2027 (BKPP, JPM), seperti disiarkan semula
+//   oleh cutisekolah.com.my dan Human Resources Online (25 Ogos 2026). Belum disemak dengan dokumen rasmi JPM.
+// - Cuti akhir persekolahan 2026: daripada laman kedua; belum disemak dengan surat siaran Kalendar Akademik 2026.
+// Entri bertanda `semak` belum disahkan dengan dokumen rasmi.
 //
 // Kemas kini setahun sekali apabila surat siaran KPM dan jadual JPM tahun baharu dikeluarkan.
 
@@ -46,7 +48,7 @@ export const SESI: Sesi[] = [
 ];
 
 const B_SEMUA = 'B' as const;
-const SUMBER_KPM = 'Tarikh daripada laman kedua; sahkan dengan surat siaran Kalendar Akademik 2027.';
+const SUMBER_KPM = 'Tarikh daripada laman kedua; sahkan dengan surat siaran Kalendar Akademik 2026.';
 const SUMBER_JPM = 'Sumber berbeza tentang tarikh atau negeri; sahkan dengan jadual JPM.';
 
 export const KALENDAR: EntriKalendar[] = [
@@ -65,19 +67,20 @@ export const KALENDAR: EntriKalendar[] = [
   { mula: '2027-12-03', tamat: '2027-12-31', nama: 'Cuti Akhir Persekolahan', jenis: 'sekolah', untuk: 'A' },
   { mula: '2027-12-04', tamat: '2027-12-31', nama: 'Cuti Akhir Persekolahan', jenis: 'sekolah', untuk: 'B' },
 
-  // ---- Cuti tambahan perayaan KPM 2027 (tidak perlu diganti) ----
-  { mula: '2027-02-09', tamat: '2027-02-11', nama: 'Cuti tambahan KPM: Tahun Baharu Cina', jenis: 'tambahan', untuk: ['KEDAH'], semak: SUMBER_KPM },
-  { mula: '2027-02-08', tamat: '2027-02-11', nama: 'Cuti tambahan KPM: Tahun Baharu Cina', jenis: 'tambahan', untuk: ['KELANTAN', 'TERENGGANU'], semak: SUMBER_KPM },
-  { mula: '2027-02-05', nama: 'Cuti tambahan KPM: Tahun Baharu Cina', jenis: 'tambahan', untuk: B_SEMUA, semak: SUMBER_KPM },
-  { mula: '2027-02-09', tamat: '2027-02-12', nama: 'Cuti tambahan KPM: Tahun Baharu Cina', jenis: 'tambahan', untuk: B_SEMUA, semak: SUMBER_KPM },
-  { mula: '2027-03-14', nama: 'Cuti tambahan KPM: Hari Raya Aidilfitri', jenis: 'tambahan', untuk: 'A', semak: SUMBER_KPM },
-  { mula: '2027-05-16', nama: 'Cuti tambahan KPM: Hari Raya Aidiladha', jenis: 'tambahan', untuk: ['KEDAH'], semak: SUMBER_KPM },
-  { mula: '2027-05-19', nama: 'Cuti tambahan KPM: Hari Raya Aidiladha', jenis: 'tambahan', untuk: 'A', semak: SUMBER_KPM },
-  { mula: '2027-05-18', tamat: '2027-05-19', nama: 'Cuti tambahan KPM: Hari Raya Aidiladha', jenis: 'tambahan', untuk: B_SEMUA, semak: SUMBER_KPM },
-  { mula: '2027-05-21', nama: 'Cuti tambahan KPM: Hari Wesak', jenis: 'tambahan', untuk: B_SEMUA, semak: SUMBER_KPM },
-  { mula: '2027-10-27', nama: 'Cuti tambahan KPM: Hari Deepavali', jenis: 'tambahan', untuk: 'semua', semak: SUMBER_KPM },
-  { mula: '2027-10-29', nama: 'Cuti tambahan KPM: Hari Deepavali', jenis: 'tambahan', untuk: B_SEMUA, kecuali: ['SARAWAK'], semak: SUMBER_KPM },
-  { mula: '2027-10-28', nama: 'Cuti tambahan KPM: Hari Deepavali', jenis: 'tambahan', untuk: ['SARAWAK'], semak: SUMBER_KPM },
+  // ---- Cuti tambahan perayaan KPM 2027 (Lampiran C; tidak perlu diganti) ----
+  { mula: '2027-02-09', tamat: '2027-02-11', nama: 'Cuti tambahan KPM: Tahun Baharu Cina', jenis: 'tambahan', untuk: ['KEDAH'] },
+  { mula: '2027-02-08', tamat: '2027-02-11', nama: 'Cuti tambahan KPM: Tahun Baharu Cina', jenis: 'tambahan', untuk: ['KELANTAN', 'TERENGGANU'] },
+  { mula: '2027-02-05', nama: 'Cuti tambahan KPM: Tahun Baharu Cina', jenis: 'tambahan', untuk: B_SEMUA },
+  { mula: '2027-02-09', tamat: '2027-02-12', nama: 'Cuti tambahan KPM: Tahun Baharu Cina', jenis: 'tambahan', untuk: B_SEMUA },
+  { mula: '2027-03-14', nama: 'Cuti tambahan KPM: Hari Raya Aidilfitri', jenis: 'tambahan', untuk: 'A' },
+  { mula: '2027-05-16', nama: 'Cuti tambahan KPM: Hari Raya Aidiladha', jenis: 'tambahan', untuk: 'A' },
+  { mula: '2027-05-18', nama: 'Cuti tambahan KPM: Hari Raya Aidiladha', jenis: 'tambahan', untuk: ['KEDAH'] },
+  { mula: '2027-05-19', nama: 'Cuti tambahan KPM: Hari Raya Aidiladha', jenis: 'tambahan', untuk: 'A' },
+  { mula: '2027-05-18', tamat: '2027-05-19', nama: 'Cuti tambahan KPM: Hari Raya Aidiladha', jenis: 'tambahan', untuk: B_SEMUA },
+  { mula: '2027-05-21', nama: 'Cuti tambahan KPM: Hari Wesak', jenis: 'tambahan', untuk: B_SEMUA },
+  { mula: '2027-10-27', nama: 'Cuti tambahan KPM: Hari Deepavali', jenis: 'tambahan', untuk: 'semua', kecuali: ['SARAWAK'] },
+  { mula: '2027-10-29', nama: 'Cuti tambahan KPM: Hari Deepavali', jenis: 'tambahan', untuk: B_SEMUA, kecuali: ['SARAWAK'] },
+  { mula: '2027-10-28', nama: 'Cuti tambahan KPM: Hari Deepavali', jenis: 'tambahan', untuk: ['SARAWAK'] },
 
   // ---- Hari kelepasan am 2027 ----
   { mula: '2027-01-01', nama: 'Tahun Baharu', jenis: 'umum', untuk: 'semua', kecuali: ['JOHOR', 'KEDAH', 'KELANTAN', 'PERLIS', 'TERENGGANU'] },

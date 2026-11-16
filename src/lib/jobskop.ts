@@ -24,9 +24,33 @@ export interface DataMysg {
   portfolio: PortfolioMysg[];
 }
 
-/** Senarai tugas MySG Sekolah Rendah; dimuat hanya apabila skrin Jobskop dibuka. */
-export async function muatMysg(): Promise<DataMysg> {
-  return (await import('../data/mysg-rendah.json')).default as unknown as DataMysg;
+export type Peringkat = 'rendah' | 'menengah';
+export const NAMA_PERINGKAT: Record<Peringkat, string> = { rendah: 'Sekolah Rendah', menengah: 'Sekolah Menengah' };
+
+/** Senarai tugas MySG bagi satu peringkat; dimuat hanya apabila diperlukan. */
+export async function muatMysg(peringkat: Peringkat = 'rendah'): Promise<DataMysg> {
+  const modul = peringkat === 'menengah' ? await import('../data/mysg-menengah.json') : await import('../data/mysg-rendah.json');
+  return modul.default as unknown as DataMysg;
+}
+
+/** Kod MySG Sekolah Menengah bermula HM, PM atau JM; Sekolah Rendah HR, PR atau JR. */
+export const peringkatKod = (kod: string): Peringkat => (/^[HPJ]M\d/.test(kod) ? 'menengah' : 'rendah');
+
+const KUNCI_PERINGKAT = 'guru360.mysg.peringkat';
+/** Peringkat yang terakhir dipilih pada telefon ini. */
+export function peringkatTerakhir(): Peringkat {
+  try {
+    return localStorage.getItem(KUNCI_PERINGKAT) === 'menengah' ? 'menengah' : 'rendah';
+  } catch {
+    return 'rendah';
+  }
+}
+export function ingatPeringkat(p: Peringkat): void {
+  try {
+    localStorage.setItem(KUNCI_PERINGKAT, p);
+  } catch {
+    /* storan tidak tersedia */
+  }
 }
 
 export const NAMA_JENIS: Record<JenisPortfolio, string> = {

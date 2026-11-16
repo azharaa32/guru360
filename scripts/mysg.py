@@ -2,6 +2,7 @@
 
 Guna:  pdftotext -layout MySG-Sekolah-Rendah-KPM.pdf mysg.txt
        python3 scripts/mysg.py mysg.txt src/data/mysg-rendah.json
+       python3 scripts/mysg.py mysgm.txt src/data/mysg-menengah.json menengah
 
 Dokumen PDF itu sendiri tidak disimpan dalam repositori.
 """
@@ -9,14 +10,16 @@ import json
 import re
 import sys
 
-KEPALA = re.compile(r'^\s*((?:HR|PR|JR)\d+)(?: – ((?:HR|PR|JR)\d+))? \| (.+?)\s*$')
+KEPALA = re.compile(r'^\s*((?:HR|PR|JR|HM|PM|JM)\d+)(?: – ((?:HR|PR|JR|HM|PM|JM)\d+))? \| (.+?)\s*$')
 BUTIR = re.compile(r'^(\s*)(\d{1,2}\.(?=\s)|\d{1,2}(?:\.\d{1,2}){1,2}\.?(?=\s{2,}))\s+(\S.*)$')
 SUB = re.compile(r'^(\s*)(?:\(?([a-z]|[ivx]{1,5})[.)])\s+(\S.*)$')
 KUMPULAN = re.compile(r'^\s*\(([A-Z]\d{0,2}|\d{1,2})\)\s+(\S.*)$')
 HURUF_BESAR = re.compile(r'^[^a-z]{4,}')
 TAJUK_BESAR = re.compile(r'^\s*(TUGAS UTAMA \((?:UMUM|KHUSUS)\))\s*$')
-SUBJAWATAN = re.compile(r'^\s*(HR\d+)\s*[–-]\s*(GURU .+?)\s*$')
+SUBJAWATAN = re.compile(r'^\s*(H[RM]\d+)\s*[–-]\s*(GURU .+?)\s*$')
 MUKA = re.compile(r'^\s*\d{1,3}\s*$')
+# Pengepala dan pengaki halaman yang berulang (dokumen Sekolah Menengah).
+PENGAKI = re.compile(r'^\s*(?:\d{1,3}\s+)?KEMENTERIAN PENDIDIKAN MALAYSIA(?:\s+\d{1,3})?\s*$|^\s*MALAYSIAN SCHOOL GOVERNANCE \(MySG\) SEKOLAH (?:MENENGAH|RENDAH)\s*$')
 RUMI = re.compile(r'^\s*[ivxl]{1,6}\.\s')
 # Baris yang menandakan bahagian itu sudah tamat (tajuk bab atau komponen berikutnya).
 TAMAT = re.compile(r'^\s*(BAB \d|KOMPONEN [A-Z]|[PJ]\s{3,}(PORTFOLIO|JAWATANKUASA)|\d\.\d(\.\d)?\s+-\s*[A-Z]|\d\.\d(\.\d)?\s+[A-Z][A-Z ]{6,}$|\d\.\d(\.\d)?\s*$|LAMPIRAN|PENUTUP\s*$|GLOSARI|SENARAI SINGKATAN)')
@@ -32,6 +35,18 @@ def sambung(a, b):
 def kemas(s):
     s = re.sub(r'\s+', ' ', s).strip()
     return s.replace(' ,', ',').replace(' .', '.')
+
+
+HAD_TUGAS = 500
+
+
+def pendekkan(t):
+    if len(t) <= HAD_TUGAS:
+        return t
+    potong = t[:HAD_TUGAS]
+    hujung = max(potong.rfind('. '), potong.rfind('; '), potong.rfind(':\n'), potong.rfind('.\n'))
+    potong = potong[:hujung + 1] if hujung > 120 else potong[:potong.rfind(' ')]
+    return potong.rstrip(' ;:,\n') + ' … (rujuk MySG untuk butiran penuh)'
 
 
 def urai(blok):
@@ -110,24 +125,28 @@ def urai(blok):
     return [k for k in kumpulan if k['tugas']]
 
 
-def main(masuk, keluar):
-    L = open(masuk, encoding='utf-8').read().split('\n')
+def main(masuk, keluar, peringkat='rendah'):
+    L = [l for l in open(masuk, encoding='utf-8').read().split('\n') if not PENGAKI.match(l)]
     kepala = [(i, m) for i, l in enumerate(L) if i > 300 and (m := KEPALA.match(l))]
     hasil = []
     for k, (i, m) in enumerate(kepala):
         akhir = kepala[k + 1][0] if k + 1 < len(kepala) else len(L)
         kod, hingga, nama = m.group(1), m.group(2), kemas(m.group(3))
-        jenis = {'HR': 'berjawatan', 'PR': 'tanpa_jawatan', 'JR': 'jawatankuasa'}[kod[:2]]
+        jenis = {'H': 'berjawatan', 'P': 'tanpa_jawatan', 'J': 'jawatankuasa'}[kod[0]]
         hasil.append({'kod': kod + (f'–{hingga}' if hingga else ''), 'nama': nama, 'jenis': jenis, 'kumpulan': urai(L[i + 1:akhir])})
+    # Butir yang menelan jadual atau lampiran panjang dipendekkan pada hujung ayat, supaya senarai tugas kekal boleh dibaca.
+    for p in hasil:
+        for g in p['kumpulan']:
+            g['tugas'] = [pendekkan(t) for t in g['tugas']]
     # Portfolio yang berkongsi senarai tugas dengan portfolio berikutnya (tajuk berturut-turut).
     for a, b in zip(hasil, hasil[1:]):
         if not a['kumpulan']:
             a['kumpulan'] = b['kumpulan']
             a['kongsi'] = b['kod']
-    json.dump({'sumber': 'MySG: Garis Panduan Tadbir Urus Sekolah Rendah KPM', 'peringkat': 'rendah', 'portfolio': hasil}, open(keluar, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    json.dump({'sumber': 'MySG: Garis Panduan Tadbir Urus Sekolah ' + ('Menengah' if peringkat == 'menengah' else 'Rendah') + ' KPM', 'peringkat': peringkat, 'portfolio': hasil}, open(keluar, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     for p in hasil:
         print(f"{p['kod']:10} {p['nama'][:48]:48} kumpulan={len(p['kumpulan']):2} tugas={sum(len(g['tugas']) for g in p['kumpulan']):3}")
 
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else 'rendah')
