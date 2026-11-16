@@ -1,7 +1,7 @@
 // Pendaftaran sekolah oleh pengurusan sekolah (terbuka kepada orang awam; menunggu kelulusan ibu pejabat).
 import { balas, ciptaSekolah, klienAdmin, praterbang, ralat, semak } from './cipta.ts';
 
-const HAD_MENUNGGU = 30;
+const HAD_MENUNGGU = 10;
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return praterbang();
