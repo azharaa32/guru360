@@ -2374,3 +2374,31 @@ a.acara-butang {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Fasa sekolah, tugas 7: baca dokumen guru */
+.baca-dokumen {
+  gap: 14px;
+}
+
+.baca-dokumen h2 {
+  margin: 0;
+}
+
+.baca-teks {
+  display: block;
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.baca-senarai {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.baca-senarai li {
+  overflow-wrap: anywhere;
+}

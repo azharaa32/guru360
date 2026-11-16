@@ -16,6 +16,7 @@ import { pautanEmel } from './lib/supabase';
 import { useTemplat } from './lib/templat';
 import { Profil } from './screens/Lain';
 import { Pengurusan, TiadaSekolah } from './screens/Sekolah';
+import { DokumenGuru } from './screens/DokumenGuru';
 import { MaklumanGuru, MaklumanUrus } from './screens/Makluman';
 import { Panduan } from './screens/Panduan';
 import { SemakRph } from './screens/SemakRph';
@@ -129,6 +130,8 @@ function App() {
               belumHantar={belumHantar}
               simpan={simpan}
             />
+        ) : laluan === 'dokumen' && adminAktif && keahlian.sekolah ? (
+          <DokumenGuru sekolahId={keahlian.sekolah.id} dalamTalian={dalamTalian} guruId={param[0]} dokId={param[1]} />
         ) : laluan === 'semak' && adminAktif && keahlian.sekolah ? (
           <SemakRph sekolahId={keahlian.sekolah.id} negeri={keahlian.sekolah.negeri} dalamTalian={dalamTalian} tarikh={param[0]} guruId={param[1]} />
         ) : laluan === 'makluman' && param[0] === 'semua' && keahlian.ibuPejabat ? (
