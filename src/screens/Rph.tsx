@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { agihUcapan, sambung, suaraDisokong, useSuara, type MedanRph } from '../lib/suara';
 import { HasilPdf, usePdf } from '../components/Pdf';
 import { KepalaKembali } from '../components/Rangka';
 import type { Semakan } from '../lib/semakan';
@@ -263,6 +264,31 @@ export function RphEdit(p: Asas & { tarikh?: string; kunci?: string; fokus?: str
   const [mesej, setMesej] = useState<{ jenis: 'ok' | 'ralat'; teks: string } | null>(null);
   const [salinDari, setSalinDari] = useState('');
   const [sahSalin, setSahSalin] = useState(false);
+
+  // Perakam suara: satu butang untuk semua medan. Guru menyebut nama medan ("objektif", "aktiviti", "pentaksiran",
+  // "refleksi") untuk berpindah; teks disambung di hujung teks sedia ada. Tanpa nama medan, teks masuk ke medan
+  // yang terakhir disentuh (asalnya Objektif).
+  const medanSuara = useRef<MedanRph>('objektif');
+  const [medanAktif, setMedanAktif] = useState<MedanRph>('objektif');
+  const suara = useSuara((teks) => {
+    const { bahagian, akhir } = agihUcapan(teks, medanSuara.current);
+    medanSuara.current = akhir;
+    setMedanAktif(akhir);
+    const ada = Object.keys(bahagian) as MedanRph[];
+    if (ada.length === 0) return;
+    setMesej(null);
+    setSahSalin(false);
+    setKotor(true);
+    setIsi((i) => {
+      const baru = { ...i };
+      for (const m of ada) baru[m] = sambung(baru[m], bahagian[m]!).slice(0, MEDAN.find((x) => x.id === m)!.maks);
+      return baru;
+    });
+  });
+  const pilihMedanSuara = (m: MedanRph) => {
+    medanSuara.current = m;
+    setMedanAktif(m);
+  };
   const pdf = usePdf();
 
   // Muat isi dari pelayan apabila ia sampai, selagi guru belum menaip.
@@ -344,6 +370,7 @@ export function RphEdit(p: Asas & { tarikh?: string; kunci?: string; fokus?: str
     setKotor(true);
     setIsi((i) => ({ ...i, [medan]: nilai }));
   };
+
 
   const tetapStatus = (baharu: 'draf' | 'siap') => {
     const bersih: Isi = { objektif: kemasIsi(isi.objektif), aktiviti: kemasIsi(isi.aktiviti), pentaksiran: kemasIsi(isi.pentaksiran), refleksi: kemasIsi(isi.refleksi) };
@@ -429,6 +456,33 @@ export function RphEdit(p: Asas & { tarikh?: string; kunci?: string; fokus?: str
         </section>
 
         <form className="kad borang" onSubmit={(e) => e.preventDefault()}>
+          {suaraDisokong() && (
+            <div className="kotak-suara">
+              <button
+                type="button"
+                className={`butang ${suara.merakam ? 'butang-merakam' : 'butang-garis'}`}
+                aria-pressed={suara.merakam}
+                onClick={suara.merakam ? suara.henti : suara.mula}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="3" width="6" height="12" rx="3" />
+                  <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+                </svg>
+                {suara.merakam ? 'Berhenti merakam' : 'Cakap untuk isi RPH'}
+              </button>
+              <p className="bantuan">
+                {suara.merakam
+                  ? `Sedang mendengar · masuk ke ${MEDAN.find((x) => x.id === medanAktif)!.label}. Sebut "objektif", "aktiviti", "pentaksiran" atau "refleksi" untuk bertukar medan.`
+                  : 'Sebut nama medan dahulu, contohnya: "Objektif murid dapat membaca petikan. Aktiviti bacaan berkumpulan." Teks disambung di hujung. Perlu internet.'}
+              </p>
+              {suara.sementara && <p className="teks-sementara" aria-live="polite">{suara.sementara}</p>}
+              {suara.ralat && (
+                <p className="mesej mesej-ralat" role="alert">
+                  {suara.ralat}
+                </p>
+              )}
+            </div>
+          )}
           {MEDAN.map((m) => (
             <div className="medan" key={m.id}>
               <label htmlFor={`rph-${m.id}`}>{m.label}</label>
@@ -440,6 +494,7 @@ export function RphEdit(p: Asas & { tarikh?: string; kunci?: string; fokus?: str
                 maxLength={m.maks}
                 autoCapitalize="characters"
                 onChange={(e) => tukar(m.id, e.target.value)}
+                onFocus={() => pilihMedanSuara(m.id)}
                 aria-describedby={m.bantuan ? `rph-${m.id}-bantuan` : undefined}
               />
               {m.bantuan && (

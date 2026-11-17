@@ -2433,3 +2433,41 @@ a.acara-butang {
 .bar-peratus > span.penuh {
   background: var(--hijau, #0e5a4a);
 }
+
+/* Perakam suara di borang RPH. */
+.kotak-suara {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--garis, #e3e0d8);
+}
+
+.kotak-suara .butang {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.butang-merakam {
+  background: var(--merah);
+  color: #fff;
+  border: 2px solid var(--merah);
+  animation: denyut-rakam 1.6s ease-in-out infinite;
+}
+
+@keyframes denyut-rakam {
+  50% { box-shadow: 0 0 0 6px var(--merah-lembut); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .butang-merakam { animation: none; }
+}
+
+.teks-sementara {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--emas-lembut);
+  font-style: italic;
+}
