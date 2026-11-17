@@ -4,8 +4,9 @@
 // - Kalendar akademik dan cuti tambahan perayaan 2027: Surat Siaran Kementerian Pendidikan Bilangan 1 Tahun 2026,
 //   "Kalendar Akademik Tahun 2027", ruj. KPM.100-1/3/2 JLD 14 (11), bertarikh 2 Oktober 2026 (Lampiran A, B dan C).
 //   Disemak dengan dokumen rasmi pada 16 November 2026. Surat itu juga menetapkan sesi 2028 bermula 3 Januari 2028.
-// - Hari kelepasan am 2027: Jadual Hari Kelepasan Am Persekutuan dan Negeri 2027 (BKPP, JPM), seperti disiarkan semula
-//   oleh cutisekolah.com.my dan Human Resources Online (25 Ogos 2026). Belum disemak dengan dokumen rasmi JPM.
+// - Hari kelepasan am 2027: Jadual Hari Kelepasan Am Persekutuan dan Negeri 2027 (Bahagian Kabinet, Perlembagaan dan
+//   Perhubungan Antara Kerajaan, JPM). Disemak dengan dokumen rasmi pada 17 November 2026. Jadual itu tidak menyenaraikan
+//   cuti ganti; entri `ganti` dikira mengikut Akta Hari Kelepasan 1951 dan kekal bertanda `semak`.
 // - Cuti akhir persekolahan 2026: daripada laman kedua; belum disemak dengan surat siaran Kalendar Akademik 2026.
 // Entri bertanda `semak` belum disahkan dengan dokumen rasmi.
 //
@@ -86,18 +87,19 @@ export const KALENDAR: EntriKalendar[] = [
   { mula: '2027-01-01', nama: 'Tahun Baharu', jenis: 'umum', untuk: 'semua', kecuali: ['JOHOR', 'KEDAH', 'KELANTAN', 'PERLIS', 'TERENGGANU'] },
   { mula: '2027-01-06', nama: 'Israk dan Mikraj', jenis: 'umum', untuk: ['KEDAH', 'NEGERI SEMBILAN', 'PERLIS', 'TERENGGANU'] },
   { mula: '2027-01-14', nama: 'Hari Keputeraan Yang di-Pertuan Besar Negeri Sembilan', jenis: 'umum', untuk: ['NEGERI SEMBILAN'] },
-  { mula: '2027-01-22', nama: 'Thaipusam', jenis: 'umum', untuk: ['JOHOR', 'KEDAH', 'NEGERI SEMBILAN', 'PERAK', 'PULAU PINANG', 'SELANGOR', 'WP KUALA LUMPUR', 'WP PUTRAJAYA'], semak: SUMBER_JPM },
+  { mula: '2027-01-22', nama: 'Thaipusam', jenis: 'umum', untuk: ['JOHOR', 'NEGERI SEMBILAN', 'PERAK', 'PULAU PINANG', 'SELANGOR', 'WP KUALA LUMPUR', 'WP PUTRAJAYA'] },
   { mula: '2027-02-01', nama: 'Hari Wilayah Persekutuan', jenis: 'umum', untuk: ['WP KUALA LUMPUR', 'WP LABUAN', 'WP PUTRAJAYA'] },
   { mula: '2027-02-06', tamat: '2027-02-07', nama: 'Tahun Baharu Cina', jenis: 'umum', untuk: 'semua' },
   { mula: '2027-02-08', nama: 'Cuti ganti Tahun Baharu Cina', jenis: 'ganti', untuk: B_SEMUA },
   { mula: '2027-02-08', nama: 'Awal Ramadan', jenis: 'umum', untuk: ['JOHOR', 'KEDAH'] },
   { mula: '2027-02-20', nama: 'Hari Pengisytiharan Kemerdekaan', jenis: 'umum', untuk: ['MELAKA'] },
-  { mula: '2027-02-24', nama: 'Nuzul Al-Quran', jenis: 'umum', untuk: 'semua', kecuali: ['JOHOR', 'KEDAH', 'MELAKA', 'NEGERI SEMBILAN', 'SABAH', 'SARAWAK'], semak: SUMBER_JPM },
+  { mula: '2027-02-24', nama: 'Nuzul Al-Quran', jenis: 'umum', untuk: 'semua', kecuali: ['JOHOR', 'KEDAH', 'MELAKA', 'NEGERI SEMBILAN', 'SABAH', 'SARAWAK'] },
   { mula: '2027-03-04', nama: 'Ulang Tahun Pertabalan Sultan Terengganu', jenis: 'umum', untuk: ['TERENGGANU'] },
   { mula: '2027-03-10', tamat: '2027-03-11', nama: 'Hari Raya Aidilfitri', jenis: 'umum', untuk: 'semua' },
-  { mula: '2027-03-12', nama: 'Hari Raya Aidilfitri (hari ketiga)', jenis: 'umum', untuk: ['MELAKA'], semak: SUMBER_JPM },
+  { mula: '2027-03-12', nama: 'Hari Raya Aidilfitri (hari ketiga)', jenis: 'umum', untuk: ['MELAKA'] },
   { mula: '2027-03-23', nama: 'Hari Keputeraan Sultan Johor', jenis: 'umum', untuk: ['JOHOR'] },
   { mula: '2027-03-26', nama: 'Good Friday', jenis: 'umum', untuk: ['SABAH', 'SARAWAK'] },
+  { mula: '2027-03-30', nama: 'Hari Jadi Yang di-Pertua Negeri Sabah', jenis: 'umum', untuk: ['SABAH'] },
   { mula: '2027-04-26', nama: 'Hari Keputeraan Sultan Terengganu', jenis: 'umum', untuk: ['TERENGGANU'] },
   { mula: '2027-05-01', nama: 'Hari Pekerja', jenis: 'umum', untuk: 'semua' },
   { mula: '2027-05-16', nama: 'Hari Arafah', jenis: 'umum', untuk: ['KELANTAN', 'TERENGGANU'] },
@@ -105,25 +107,24 @@ export const KALENDAR: EntriKalendar[] = [
   { mula: '2027-05-17', nama: 'Hari Keputeraan Raja Perlis', jenis: 'umum', untuk: ['PERLIS'] },
   { mula: '2027-05-18', nama: 'Hari Raya Aidiladha (hari kedua)', jenis: 'umum', untuk: ['KEDAH', 'KELANTAN', 'PERLIS', 'TERENGGANU'] },
   { mula: '2027-05-20', nama: 'Hari Wesak', jenis: 'umum', untuk: 'semua' },
-  { mula: '2027-05-22', nama: 'Hari Hol Pahang', jenis: 'umum', untuk: ['PAHANG'], semak: SUMBER_JPM },
+  { mula: '2027-05-22', nama: 'Hari Hol Pahang', jenis: 'umum', untuk: ['PAHANG'] },
   { mula: '2027-05-30', tamat: '2027-05-31', nama: 'Pesta Kaamatan', jenis: 'umum', untuk: ['SABAH', 'WP LABUAN'] },
   { mula: '2027-06-01', tamat: '2027-06-02', nama: 'Hari Gawai Dayak', jenis: 'umum', untuk: ['SARAWAK'] },
   { mula: '2027-06-06', nama: 'Awal Muharram', jenis: 'umum', untuk: 'semua' },
   { mula: '2027-06-07', nama: 'Hari Keputeraan Yang di-Pertuan Agong', jenis: 'umum', untuk: 'semua' },
-  { mula: '2027-06-08', nama: 'Cuti ganti Awal Muharram', jenis: 'ganti', untuk: B_SEMUA, semak: 'Dikira mengikut Akta Hari Kelepasan 1951 (cuti pada Ahad diganti hari bekerja berikutnya); sahkan dengan jadual JPM.' },
+  { mula: '2027-06-08', nama: 'Cuti ganti Awal Muharram', jenis: 'ganti', untuk: B_SEMUA, semak: 'Dikira mengikut Akta Hari Kelepasan 1951 (cuti pada Ahad diganti hari bekerja berikutnya); jadual JPM tidak menyenaraikan cuti ganti.' },
   { mula: '2027-06-20', nama: 'Hari Keputeraan Sultan Kedah', jenis: 'umum', untuk: ['KEDAH'] },
   { mula: '2027-07-07', nama: 'Hari Ulang Tahun George Town Tapak Warisan Dunia', jenis: 'umum', untuk: ['PULAU PINANG'] },
   { mula: '2027-07-10', nama: 'Hari Jadi Yang di-Pertua Negeri Pulau Pinang', jenis: 'umum', untuk: ['PULAU PINANG'] },
-  { mula: '2027-07-11', nama: 'Hari Hol Almarhum Sultan Iskandar', jenis: 'umum', untuk: ['JOHOR'], semak: 'Sumber menyebut 10 atau 11 Julai; sahkan dengan jadual JPM.' },
+  { mula: '2027-07-11', nama: 'Hari Hol Almarhum Sultan Iskandar', jenis: 'umum', untuk: ['JOHOR'] },
   { mula: '2027-07-22', nama: 'Hari Sarawak', jenis: 'umum', untuk: ['SARAWAK'] },
   { mula: '2027-07-30', nama: 'Hari Keputeraan Sultan Pahang', jenis: 'umum', untuk: ['PAHANG'] },
   { mula: '2027-08-15', nama: 'Maulidur Rasul', jenis: 'umum', untuk: 'semua' },
-  { mula: '2027-08-16', nama: 'Cuti ganti Maulidur Rasul', jenis: 'ganti', untuk: B_SEMUA, semak: 'Dikira mengikut Akta Hari Kelepasan 1951 (cuti pada Ahad diganti hari berikutnya); sahkan dengan jadual JPM.' },
+  { mula: '2027-08-16', nama: 'Cuti ganti Maulidur Rasul', jenis: 'ganti', untuk: B_SEMUA, semak: 'Dikira mengikut Akta Hari Kelepasan 1951 (cuti pada Ahad diganti hari berikutnya); jadual JPM tidak menyenaraikan cuti ganti.' },
   { mula: '2027-08-24', nama: 'Hari Jadi Yang di-Pertua Negeri Melaka', jenis: 'umum', untuk: ['MELAKA'] },
   { mula: '2027-08-31', nama: 'Hari Kebangsaan', jenis: 'umum', untuk: 'semua' },
   { mula: '2027-09-16', nama: 'Hari Malaysia', jenis: 'umum', untuk: 'semua' },
   { mula: '2027-09-29', tamat: '2027-09-30', nama: 'Hari Keputeraan Sultan Kelantan', jenis: 'umum', untuk: ['KELANTAN'] },
-  { mula: '2027-10-02', nama: 'Hari Jadi Yang di-Pertua Negeri Sabah', jenis: 'umum', untuk: ['SABAH'], semak: SUMBER_JPM },
   { mula: '2027-10-09', nama: 'Hari Jadi Yang di-Pertua Negeri Sarawak', jenis: 'umum', untuk: ['SARAWAK'] },
   { mula: '2027-10-28', nama: 'Hari Deepavali', jenis: 'umum', untuk: 'semua', kecuali: ['SARAWAK'] },
   { mula: '2027-11-05', nama: 'Hari Keputeraan Sultan Perak', jenis: 'umum', untuk: ['PERAK'] },
