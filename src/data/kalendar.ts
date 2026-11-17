@@ -50,7 +50,6 @@ export const SESI: Sesi[] = [
 
 const B_SEMUA = 'B' as const;
 const SUMBER_KPM = 'Tarikh daripada laman kedua; sahkan dengan surat siaran Kalendar Akademik 2026.';
-const SUMBER_JPM = 'Sumber berbeza tentang tarikh atau negeri; sahkan dengan jadual JPM.';
 
 export const KALENDAR: EntriKalendar[] = [
   // ---- 2026 (baki tahun semasa) ----
