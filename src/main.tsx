@@ -11,6 +11,7 @@ import { useProgram } from './lib/program';
 import { useRph } from './lib/rph';
 import { useJawatanSaya } from './lib/jawatan';
 import { useMakluman } from './lib/makluman';
+import { usePautan } from './lib/pautan';
 import { usePeringatanSaya } from './lib/peringatan';
 import { useKeahlian } from './lib/sekolah';
 import { useSemakanSaya } from './lib/semakan';
@@ -21,6 +22,7 @@ import { Pengurusan, TiadaSekolah } from './screens/Sekolah';
 import { DokumenGuru } from './screens/DokumenGuru';
 import { JawatanGuru } from './screens/JawatanGuru';
 import { MaklumanGuru, MaklumanUrus } from './screens/Makluman';
+import { KadPautan, PautanGuru, PautanUrus } from './screens/Pautan';
 import { Panduan } from './screens/Panduan';
 import { SemakRph } from './screens/SemakRph';
 import { Takwim } from './screens/Takwim';
@@ -66,6 +68,8 @@ function App() {
   const jawatanSaya = useJawatanSaya(uidGuru, dalamTalian);
   const peringatan = usePeringatanSaya(uidGuru, dalamTalian);
   const mak = useMakluman(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
+  const pautanPantas = usePautan(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
+  const urusPautan = { pautan: pautanPantas.pautan, sedia: pautanPantas.sedia, ralat: pautanPantas.ralat, dalamTalian, tambah: pautanPantas.tambah, ubah: pautanPantas.ubah, padam: pautanPantas.padam, tukarTempat: pautanPantas.tukarTempat };
   const guruAktif = (sekolahId?: string) => keahlian.ahli.filter((a) => a.peranan === 'guru' && a.status === 'aktif' && (!sekolahId || a.sekolah_id === sekolahId)).length;
   const semuaCuti = useMemo(() => [...cutiSendiri.cuti, ...bersama.cuti], [cutiSendiri.cuti, bersama.cuti]);
   const kal = useMemo(() => binaKalendar(negeri, semuaCuti), [negeri, semuaCuti]);
@@ -149,6 +153,10 @@ function App() {
           <DokumenGuru sekolahId={keahlian.sekolah.id} namaSekolah={keahlian.sekolah.nama} templat={templat.templat} logo={templat.logo} dalamTalian={dalamTalian} guruId={param[0]} dokId={param[1]} />
         ) : laluan === 'semak' && adminAktif && keahlian.sekolah ? (
           <SemakRph sekolahId={keahlian.sekolah.id} negeri={keahlian.sekolah.negeri} dalamTalian={dalamTalian} tarikh={param[0]} guruId={param[1]} />
+        ) : laluan === 'pautan' && param[0] === 'semua' && keahlian.ibuPejabat ? (
+          <PautanUrus key="semua" mod="semua" skop={null} {...urusPautan} />
+        ) : laluan === 'pautan' && adminAktif && keahlian.sekolah ? (
+          <PautanUrus key="sekolah" mod="sekolah" skop={keahlian.sekolah.id} namaSekolah={keahlian.sekolah.nama} {...urusPautan} />
         ) : laluan === 'makluman' && param[0] === 'semua' && keahlian.ibuPejabat ? (
           <MaklumanUrus key="semua" mod="semua" makluman={mak.makluman} status={mak.status} sekolahId={null} jumlahGuru={guruAktif()} sedia={mak.sedia} ralat={mak.ralat} dalamTalian={dalamTalian} hantar={mak.hantar} padam={mak.padam} />
         ) : laluan === 'makluman' && adminAktif && keahlian.sekolah ? (
@@ -214,6 +222,7 @@ function App() {
           kal={kal}
           waktu={jadual.waktu}
           rph={rph.rph}
+          pautan={<KadPautan pautan={pautanPantas.pautan} />}
           peringatan={{ minggu: [...new Set(peringatan.peringatan.map((x) => x.minggu))].sort(), tandaBaca: () => void peringatan.tandaBaca(), dalamTalian }}
           makluman={{
             jumlah: mak.makluman.length,
@@ -226,6 +235,7 @@ function App() {
           }}
         />
       )}
+      {laluan === 'pautan' && keahlian.sekolah && <PautanGuru pautan={pautanPantas.pautan} sedia={pautanPantas.sedia} namaSekolah={keahlian.sekolah.nama} />}
       {laluan === 'makluman' && keahlian.sekolah && uid && (
         <MaklumanGuru
           makluman={mak.makluman}

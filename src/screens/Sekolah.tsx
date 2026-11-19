@@ -739,6 +739,18 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula, makluman, 
         )}
 
         {keahlian.peranan === 'admin' && s?.status === 'aktif' && (
+          <a href="#/pautan" className="kad kad-pautan">
+            <span className="kad-pautan-teks">
+              <strong>Pautan pantas</strong>
+              <span>Pautan ke laman luar untuk guru sekolah ini</span>
+            </span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
+
+        {keahlian.peranan === 'admin' && s?.status === 'aktif' && (
           <a href="#/semak" className="kad kad-pautan">
             <span className="kad-pautan-teks">
               <strong>Semak RPH</strong>
@@ -767,6 +779,18 @@ export function Pengurusan({ keahlian, nama, dalamTalian, muatSemula, makluman, 
             <span className="kad-pautan-teks">
               <strong>Jawatan guru</strong>
               <span>Tetapkan portfolio dan jawatankuasa setiap guru</span>
+            </span>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
+
+        {keahlian.ibuPejabat && (
+          <a href="#/pautan/semua" className="kad kad-pautan">
+            <span className="kad-pautan-teks">
+              <strong>Pautan semua sekolah</strong>
+              <span>Pautan ke laman luar untuk guru semua sekolah</span>
             </span>
             <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 6l6 6-6 6" />

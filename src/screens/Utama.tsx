@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { Ikon, type NamaIkon } from '../components/Ikon';
 import { Kepala } from '../components/Rangka';
@@ -69,6 +70,8 @@ interface Props {
   makluman?: { jumlah: number; belumBaca: number; belumSiap: number; perhatian: number };
   /** Peringatan RPH daripada admin sekolah yang belum ditanda faham; `minggu` ialah hari pertama setiap minggu. */
   peringatan?: { minggu: string[]; tandaBaca: () => void; dalamTalian: boolean };
+  /** Kad pautan pantas daripada admin sekolah dan ibu pejabat. */
+  pautan?: ReactNode;
 }
 
 /** Ringkasan minggu persekolahan semasa: RPH siap, draf, belum. */
@@ -144,7 +147,7 @@ function KadHariIni({ kal, waktu, rph }: Pick<Props, 'kal' | 'waktu' | 'rph'>) {
   );
 }
 
-export function Utama({ profil, sedia, kal, waktu, rph, makluman, peringatan }: Props) {
+export function Utama({ profil, sedia, kal, waktu, rph, makluman, peringatan, pautan }: Props) {
   const nama = profil?.nama ?? '';
   const ringkasan = useRingkasanMinggu(kal, waktu, rph);
   return (
@@ -198,6 +201,7 @@ export function Utama({ profil, sedia, kal, waktu, rph, makluman, peringatan }: 
             </svg>
           </a>
         )}
+        {pautan}
         {sedia && !nama && (
           <section className="kad kad-pasang" aria-labelledby="tajuk-lengkap">
             <h2 id="tajuk-lengkap">Lengkapkan profil anda</h2>

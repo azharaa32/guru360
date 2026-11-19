@@ -2471,3 +2471,75 @@ a.acara-butang {
   background: var(--emas-lembut);
   font-style: italic;
 }
+
+/* Pautan pantas. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.tab-kategori {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.tab-kategori button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--garis);
+  background: #fff;
+  color: var(--dakwat);
+  font: 600 13px var(--fon);
+  cursor: pointer;
+}
+
+.tab-kategori button[aria-pressed='true'] {
+  background: var(--hijau-2);
+  border-color: var(--hijau-2);
+  color: #fff;
+}
+
+.senarai-pautan {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.senarai-pautan li + li {
+  border-top: 1px solid var(--garis);
+}
+
+.baris-pautan {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 2px;
+  color: var(--dakwat);
+  text-decoration: none;
+}
+
+.baris-pautan .acara-teks {
+  flex: 1;
+  min-width: 0;
+}
+
+.baris-pautan svg {
+  flex: 0 0 auto;
+  color: var(--hijau-2);
+}
+
+.butang-pautan {
+  display: grid;
+  grid-template-columns: 44px 44px 1fr 1fr;
+  gap: 6px;
+}
