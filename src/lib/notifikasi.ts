@@ -10,9 +10,9 @@ const iPhone = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.
 const dipasang = () => window.matchMedia?.('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
 const disokong = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
-function keBait(b64: string): Uint8Array {
+function keBait(b64: string): ArrayBuffer {
   const s = atob((b64 + '='.repeat((4 - (b64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
-  return Uint8Array.from(s, (c) => c.charCodeAt(0));
+  return Uint8Array.from(s, (c) => c.charCodeAt(0)).buffer;
 }
 
 async function daftar(sub: PushSubscription): Promise<boolean> {
