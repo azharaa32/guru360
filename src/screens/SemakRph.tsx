@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { KepalaKembali } from '../components/Rangka';
 import { binaKalendar, dariTarikh, hariIni, tambahHari, tarikhMesra } from '../lib/kalendar';
 import { mulaMinggu, waktuPada } from '../lib/rph';
+import { maklumkan } from '../lib/notifikasi';
 import { ahliSekolahHq, ingatkanGuru, senaraiAhli, type ButiranAhli } from '../lib/sekolah';
 import { useJadualSekolah, useSemakRph, type RphGuru, type Semakan } from '../lib/semakan';
 
@@ -150,6 +151,7 @@ export function SemakRph({ sekolahId, negeri, dalamTalian, tarikh, guruId, hq }:
     const h = await ingatkanGuru(ids, mula);
     setMengingat(false);
     if (!h.ok) return setHasilIngat({ jenis: 'ralat', teks: h.ralat });
+    if (h.dihantar > 0) maklumkan({ aksi: 'peringatan' });
     const bahagian = [h.dihantar > 0 ? `Peringatan dihantar kepada ${h.dihantar} guru (${h.emel} emel).` : 'Tiada peringatan baharu dihantar.'];
     if (h.dilangkau > 0) bahagian.push(`${h.dilangkau} guru dilangkau kerana sudah diingatkan dalam 20 jam lepas.`);
     setHasilIngat({ jenis: 'ok', teks: bahagian.join(' ') });

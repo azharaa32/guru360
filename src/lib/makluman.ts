@@ -1,3 +1,4 @@
+import { maklumkan } from './notifikasi';
 import { useCallback, useEffect, useState } from 'react';
 import { idBaharu } from './senarai';
 import { bacaStoran, tulisStoran } from './simpanan';
@@ -108,8 +109,10 @@ export function useMakluman(uid: string | null, dalamTalian: boolean) {
         return false;
       }
       setRalat(null);
-      const { error } = await supabase.from('makluman').insert({ id: idBaharu(), sekolah_id: skop, jenis: m.jenis, tajuk: m.tajuk, tarikh_akhir: m.tarikh_akhir });
+      const id = idBaharu();
+      const { error } = await supabase.from('makluman').insert({ id, sekolah_id: skop, jenis: m.jenis, tajuk: m.tajuk, tarikh_akhir: m.tarikh_akhir });
       if (error) setRalat(terjemahRalat(error.message));
+      else maklumkan({ aksi: 'makluman', makluman_id: id });
       await muat();
       return !error;
     },

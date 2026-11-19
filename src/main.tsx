@@ -12,6 +12,8 @@ import { useRph } from './lib/rph';
 import { useJawatanSaya } from './lib/jawatan';
 import { useMakluman } from './lib/makluman';
 import { usePautan } from './lib/pautan';
+import { useNotifikasi } from './lib/notifikasi';
+import { KadNotis, TetapanNotis } from './screens/Notifikasi';
 import { usePeringatanSaya } from './lib/peringatan';
 import { useKeahlian } from './lib/sekolah';
 import { useSemakanSaya } from './lib/semakan';
@@ -68,6 +70,8 @@ function App() {
   const jawatanSaya = useJawatanSaya(uidGuru, dalamTalian);
   const peringatan = usePeringatanSaya(uidGuru, dalamTalian);
   const mak = useMakluman(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
+  const notis = useNotifikasi(uidGuru);
+  const propsNotis = { status: notis.status, ralat: notis.ralat, sibuk: notis.sibuk, dalamTalian, hidupkan: () => void notis.hidupkan(), matikan: () => void notis.matikan() };
   const pautanPantas = usePautan(uid && (mengajar || pengurusan) ? uid : null, dalamTalian);
   const urusPautan = { pautan: pautanPantas.pautan, sedia: pautanPantas.sedia, ralat: pautanPantas.ralat, dalamTalian, tambah: pautanPantas.tambah, ubah: pautanPantas.ubah, padam: pautanPantas.padam, tukarTempat: pautanPantas.tukarTempat };
   const guruAktif = (sekolahId?: string) => keahlian.ahli.filter((a) => a.peranan === 'guru' && a.status === 'aktif' && (!sekolahId || a.sekolah_id === sekolahId)).length;
@@ -223,6 +227,7 @@ function App() {
           waktu={jadual.waktu}
           rph={rph.rph}
           pautan={<KadPautan pautan={pautanPantas.pautan} />}
+          notis={<KadNotis {...propsNotis} />}
           peringatan={{ minggu: [...new Set(peringatan.peringatan.map((x) => x.minggu))].sort(), tandaBaca: () => void peringatan.tandaBaca(), dalamTalian }}
           makluman={{
             jumlah: mak.makluman.length,
@@ -310,6 +315,7 @@ function App() {
           sedia={sedia}
           belumHantar={belumHantar}
           simpan={simpan}
+          notis={<TetapanNotis {...propsNotis} />}
         />
       )}
       {laluan === 'panduan' && <Panduan />}

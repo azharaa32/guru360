@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import { lupakanPeranti } from '../lib/notifikasi';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Kepala } from '../components/Rangka';
 import { NEGERI, PROFIL_KOSONG, type HasilSimpan, type Profil as DataProfil } from '../lib/akaun';
@@ -26,6 +28,8 @@ interface PropsProfil {
   sedia: boolean;
   belumHantar: boolean;
   simpan: (p: DataProfil) => Promise<HasilSimpan>;
+  /** Tetapan notifikasi telefon (guru sahaja). */
+  notis?: ReactNode;
 }
 
 /** Guru meminta admin mengeluarkannya dari sekolah. Admin yang memutuskan; rekod guru kekal dengan sekolah. */
@@ -80,7 +84,7 @@ function MintaKeluar({ sudahMinta, dalamTalian, muatSemula }: { sudahMinta: bool
   );
 }
 
-export function Profil({ uid, keahlian, muatSemula, dalamTalian, emel, profil, sedia, belumHantar, simpan }: PropsProfil) {
+export function Profil({ uid, keahlian, muatSemula, dalamTalian, emel, profil, sedia, belumHantar, simpan, notis }: PropsProfil) {
   const { status, semak } = usePelayan(dalamTalian);
   const [borang, setBorang] = useState<DataProfil>(profil ?? PROFIL_KOSONG);
   const [disentuh, setDisentuh] = useState(false);
@@ -137,6 +141,7 @@ export function Profil({ uid, keahlian, muatSemula, dalamTalian, emel, profil, s
   };
 
   const keluar = async () => {
+    await lupakanPeranti();
     await supabase.auth.signOut();
   };
 
@@ -240,6 +245,8 @@ export function Profil({ uid, keahlian, muatSemula, dalamTalian, emel, profil, s
           </dl>
           {keahlian.peranan === 'guru' && <MintaKeluar sudahMinta={!!keahlian.mintaKeluar} dalamTalian={dalamTalian} muatSemula={muatSemula} />}
         </section>
+
+        {notis}
 
         {keahlian.peranan === 'guru' && (
           <>

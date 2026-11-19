@@ -1,3 +1,4 @@
+import { maklumkan } from './notifikasi';
 import { useCallback, useEffect, useState } from 'react';
 import type { Waktu } from './jadual';
 import type { CutiSendiri } from './kalendar';
@@ -80,6 +81,7 @@ export function useSemakRph(sekolahId: string | null, mula: string, tamat: strin
         .from('rph_semakan')
         .upsert({ rph_id: r.id, guru_id: r.guru_id, sekolah_id: sekolahId, ulasan: ulasan.trim().slice(0, 1000), disemak_pada: new Date().toISOString() }, { onConflict: 'rph_id' });
       if (error) setRalat(/row-level security/i.test(error.message) ? 'RPH ini sudah berubah atau belum siap. Muat semula senarai.' : terjemahRalat(error.message));
+      else maklumkan({ aksi: 'semakan', rph_id: r.id });
       await muat();
     },
     [sekolahId, muat],

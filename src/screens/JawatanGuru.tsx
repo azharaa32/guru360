@@ -1,3 +1,4 @@
+import { maklumkan } from '../lib/notifikasi';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { KepalaKembali } from '../components/Rangka';
 import { LAJUR_JAWATAN, padanJawatan, type JawatanDitetapkan } from '../lib/jawatan';
@@ -74,6 +75,7 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
       .insert({ sekolah_id: sekolahId, guru_id: dipilih.pengguna_id, tahun, kod: j.kod ?? '', nama: j.nama.trim().slice(0, 160), butiran: (j.butiran ?? '').trim().toUpperCase().slice(0, 120), status });
     setSibuk(false);
     if (error) setRalat(terjemahRalat(error.message));
+    else maklumkan({ aksi: 'jawatan', guru_id: dipilih.pengguna_id });
     await muat();
   };
 
@@ -91,6 +93,7 @@ export function JawatanGuru({ sekolahId, dalamTalian, guruId }: { sekolahId: str
     else {
       setKod('');
       setButiran('');
+      maklumkan({ aksi: 'jawatan', guru_id: dipilih.pengguna_id });
     }
     await muat();
   };

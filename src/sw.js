@@ -63,3 +63,37 @@ self.addEventListener('fetch', (event) => {
   // Fail aplikasi (nama berhash): cache dahulu.
   event.respondWith(caches.match(req, { cacheName: SHELL }).then((hit) => hit || fetch(req)));
 });
+
+// Notifikasi telefon daripada pelayan (Web Push). Isi: { tajuk, isi, url, tag }.
+self.addEventListener('push', (event) => {
+  let d = {};
+  try {
+    d = event.data ? event.data.json() : {};
+  } catch {
+    d = { isi: event.data ? event.data.text() : '' };
+  }
+  const asal = new URL('./', self.location.href).href;
+  const url = typeof d.url === 'string' && d.url.startsWith(asal) ? d.url : asal;
+  event.waitUntil(
+    self.registration.showNotification(d.tajuk || 'Guru360', {
+      body: d.isi || '',
+      icon: 'icons/icon-192.png',
+      badge: 'icons/icon-192.png',
+      tag: d.tag || undefined,
+      data: { url },
+    }),
+  );
+});
+
+// Tekan notifikasi: buka aplikasi pada skrin yang berkaitan (guna tetingkap sedia ada jika ada).
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || new URL('./', self.location.href).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((senarai) => {
+      const ada = senarai.find((c) => c.url.startsWith(new URL('./', self.location.href).href));
+      if (ada) return ada.focus().then((c) => (c && 'navigate' in c ? c.navigate(url) : undefined));
+      return self.clients.openWindow(url);
+    }),
+  );
+});
